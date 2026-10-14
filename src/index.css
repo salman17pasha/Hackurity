@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #020617; /* slate-950 */
+    --card-primary: #0f172a; /* slate-900 */
+    --card-border: #1e293b; /* slate-800 */
+    --cyan-glow: rgba(6, 182, 212, 0.25);
+    --emerald-glow: rgba(16, 185, 129, 0.25);
+    --crimson-glow: rgba(239, 68, 68, 0.25);
+  }
+
+  body {
+    background-color: #020617;
+    color: #e2e8f0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+}
+
+/* Light mode overrides when toggled in settings */
+.light body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+.light .bg-slate-950 {
+  background-color: #f8fafc !important;
+}
+.light .bg-slate-900 {
+  background-color: #ffffff !important;
+}
+.light .bg-slate-900\/80 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+.light .bg-slate-900\/50 {
+  background-color: rgba(241, 245, 249, 0.8) !important;
+}
+.light .border-slate-800 {
+  border-color: #e2e8f0 !important;
+}
+.light .border-slate-800\/60 {
+  border-color: #e2e8f0 !important;
+}
+.light .text-slate-100 {
+  color: #0f172a !important;
+}
+.light .text-slate-200 {
+  color: #1e293b !important;
+}
+.light .text-slate-300 {
+  color: #334155 !important;
+}
+.light .text-slate-400 {
+  color: #64748b !important;
+}
+
+/* Cyber SOC Grid Background */
+.cyber-grid {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(30, 41, 59, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(30, 41, 59, 0.35) 1px, transparent 1px);
+}
+
+.cyber-radial-overlay {
+  background: radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.12) 0%, transparent 60%);
+}
+
+.cyber-radial-danger {
+  background: radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.15) 0%, transparent 70%);
+}
+
+/* Glow Utilities */
+.shadow-cyan-glow {
+  box-shadow: 0 0 25px -4px rgba(6, 182, 212, 0.35), 0 0 10px -2px rgba(6, 182, 212, 0.2);
+}
+
+.shadow-emerald-glow {
+  box-shadow: 0 0 25px -4px rgba(16, 185, 129, 0.35), 0 0 10px -2px rgba(16, 185, 129, 0.2);
+}
+
+.shadow-crimson-glow {
+  box-shadow: 0 0 25px -4px rgba(239, 68, 68, 0.4), 0 0 12px -2px rgba(239, 68, 68, 0.3);
+}
+
+/* Border Shimmers */
+.border-glow-cyan {
+  border-color: rgba(6, 182, 212, 0.6);
+}
+
+.border-glow-emerald {
+  border-color: rgba(16, 185, 129, 0.6);
+}
+
+.border-glow-crimson {
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+/* Custom Scrollbar for Terminal / Logs */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #06b6d4;
+}
+
+/* Scanline Animation */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+}
