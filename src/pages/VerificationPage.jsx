@@ -15,10 +15,18 @@ import {
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAudit } from '../context/AuditContext'
+import { downloadMalwareCertificate } from '../utils/certificateGenerator'
 
 export default function VerificationPage() {
   const { navigate } = useRouter()
-  const { logs, onChainMerkleRoot, performIntegrityAudit, lastVerificationResult } = useAudit()
+  const { 
+    logs, 
+    onChainMerkleRoot, 
+    performIntegrityAudit, 
+    lastVerificationResult,
+    malwareIncident,
+    openMalwareModal
+  } = useAudit()
 
   const [isAuditing, setIsAuditing] = useState(false)
   const [terminalLogs, setTerminalLogs] = useState([])

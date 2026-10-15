@@ -1,10 +1,10 @@
-import { Shield, ShieldAlert, Cpu, LogOut, Moon, Sun, User, Terminal, Link as LinkIcon, CheckCircle2, Lock } from 'lucide-react'
+import { Shield, ShieldAlert, LogOut, Moon, Sun, Lock } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useRouter } from '../../context/RouterContext'
 import { useAudit } from '../../context/AuditContext'
 
 export default function Navbar() {
-  const { user, logout, theme, toggleTheme } = useAuth()
+  const { user, isAdmin, openLogoutModal, theme, toggleTheme } = useAuth()
   const { currentPath, navigate } = useRouter()
   const { lastVerificationResult } = useAudit()
 
@@ -16,7 +16,10 @@ export default function Navbar() {
     { label: 'Audit Logs', path: '/dashboard/logs', authRequired: true },
     { label: 'Hash-Chain', path: '/dashboard/hash-chain', authRequired: true },
     { label: 'Verification', path: '/dashboard/verify', authRequired: true },
-    ...(user?.role === 'Admin' ? [{ label: 'Tamper Simulation', path: '/dashboard/simulations', authRequired: true, adminOnly: true }] : []),
+    ...(isAdmin ? [
+      { label: 'Tamper Simulation', path: '/dashboard/simulations', authRequired: true, adminOnly: true },
+      { label: 'Smart Contract', path: '/dashboard/smart-contract', authRequired: true, adminOnly: true }
+    ] : []),
     { label: 'Settings', path: '/dashboard/settings', authRequired: true }
   ]
 
@@ -114,10 +117,8 @@ export default function Navbar() {
               </div>
 
               <button
-                onClick={() => {
-                  logout()
-                  navigate('/login')
-                }}
+                id="btn-navbar-logout"
+                onClick={openLogoutModal}
                 title="Logout session"
                 className="p-2 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-400 hover:text-red-400 hover:border-red-900/40 transition-colors"
               >

@@ -8,14 +8,16 @@ import {
   ChevronDown, 
   ChevronUp, 
   Copy, 
-  Radio
+  Radio,
+  FolderUp,
+  HardDrive
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAudit } from '../context/AuditContext'
 
 export default function LiveLogsPage() {
   const { navigate } = useRouter()
-  const { logs, isStreaming, setIsStreaming } = useAudit()
+  const { logs, isStreaming, setIsStreaming, openFolderModal, importedFolderQueue, importedFolderName } = useAudit()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDept, setSelectedDept] = useState('All')
@@ -77,8 +79,16 @@ export default function LiveLogsPage() {
           </p>
         </div>
 
-        {/* Live Stream Action */}
-        <div className="flex items-center space-x-3">
+        {/* Actions: Import Folder & Live Stream Toggle */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={openFolderModal}
+            className="px-4 py-2 rounded-xl text-xs font-mono bg-cyan-950/70 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 shadow-cyan-glow transition-all flex items-center space-x-2"
+          >
+            <FolderUp className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Import System Folder</span>
+          </button>
+
           <button
             onClick={() => setIsStreaming(!isStreaming)}
             className={`px-4 py-2 rounded-xl text-xs font-mono border transition-all flex items-center space-x-2 ${
@@ -92,6 +102,27 @@ export default function LiveLogsPage() {
           </button>
         </div>
       </div>
+
+      {/* Imported Folder Status Strip if files exist in queue */}
+      {importedFolderQueue.length > 0 && (
+        <div className="mb-6 p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/40 text-xs font-mono flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center space-x-3">
+            <HardDrive className="w-4 h-4 text-cyan-400 shrink-0" />
+            <div>
+              <span className="text-slate-400">Local System Ingestion Queue: </span>
+              <strong className="text-cyan-300 font-bold">{importedFolderName}</strong>
+              <span className="text-slate-500 ml-2">({importedFolderQueue.length} files queued / loaded)</span>
+            </div>
+          </div>
+
+          <button
+            onClick={openFolderModal}
+            className="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 text-[11px] transition-colors"
+          >
+            Open Queue & Batch Ingest &rarr;
+          </button>
+        </div>
+      )}
 
       {/* Search & Filter Control Bar */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 mb-6 shadow-md backdrop-blur-sm space-y-4">

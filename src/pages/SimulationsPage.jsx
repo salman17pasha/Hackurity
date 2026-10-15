@@ -11,25 +11,37 @@ import {
   CheckCircle2, 
   FileWarning, 
   ArrowRight,
-  UserCheck
+  UserCheck,
+  Download
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAuth } from '../context/AuthContext'
 import { useAudit } from '../context/AuditContext'
+import { downloadMalwareCertificate } from '../utils/certificateGenerator'
+import FileTamperVerifier from '../components/features/FileTamperVerifier'
+import InjectedPayloadCertificateButton from '../components/features/InjectedPayloadCertificateButton'
 
 export default function SimulationsPage() {
   const { navigate } = useRouter()
-  const { user, switchRole } = useAuth()
-  const { logs, tamperRecord, restoreRecord, resetAllRecords, lastVerificationResult } = useAudit()
+  const { user, isAdmin } = useAuth()
+  const { 
+    logs, 
+    tamperRecord, 
+    restoreRecord, 
+    resetAllRecords, 
+    lastVerificationResult,
+    malwareIncident,
+    openMalwareModal,
+    triggerMalwareIncident
+  } = useAudit()
 
   const [selectedLogId, setSelectedLogId] = useState(logs[0]?.id || 'LOG-1001')
   const [tamperType, setTamperType] = useState('fir_dismiss')
   const [successNotice, setSuccessNotice] = useState('')
 
-  const isAdmin = user?.role === 'Admin'
   const activeLog = logs.find(l => l.id === selectedLogId) || logs[0]
 
-  // If unauthorized normal user tries to access
+  // Defense-in-depth: If unauthorized normal user reaches component
   if (!isAdmin) {
     return (
       <div className="min-h-screen cyber-grid py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto flex items-center justify-center">
@@ -41,21 +53,15 @@ export default function SimulationsPage() {
             Access Restricted: Level-5 Clearance Required
           </h1>
           <p className="text-xs font-mono text-slate-400 mt-2">
-            The Tamper Simulation module contains active adversarial penetration controls restricted to Administrators.
+            The Tamper Simulation module contains active adversarial penetration controls restricted to Administrators. Privilege escalation from this interface is disabled by RBAC policy.
           </p>
 
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <button
-              onClick={() => switchRole('Admin')}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all"
-            >
-              Elevate Role to Admin
-            </button>
+          <div className="mt-6 flex items-center justify-center">
             <button
               onClick={() => navigate('/dashboard')}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-mono text-xs bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all"
+              className="px-6 py-2.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all"
             >
-              Back to Dashboard
+              Return to Dashboard
             </button>
           </div>
         </div>
@@ -65,24 +71,36 @@ export default function SimulationsPage() {
 
   const handleExecuteTamper = () => {
     let modifications = {}
+    let signature = 'CVE-2026-8819 // Tamper-Chain Malicious Payload Mutation'
 
     if (tamperType === 'fir_dismiss') {
+      signature = 'CVE-2026-JUD-401 // Insider Judicial Record Cleansing Vector'
       modifications = {
         accused: "Arjun R. Sharma [CHARGES EXPUNGED]",
         charges: "NONE - Retrospectively Cleared by Insider Query",
         bailStatus: "GRANTED - Case Terminated Unilaterally"
       }
     } else if (tamperType === 'land_theft') {
+      signature = 'CVE-2026-LAND-892 // Title Deed Ownership Hijack Vector'
       modifications = {
         grantee: "Offshore Shell Syndicate Corp",
         considerationInr: "1,000",
         location: "Whitefield Tech Corridor [Boundary Redrawn]"
       }
     } else if (tamperType === 'treasury_divert') {
+      signature = 'CVE-2026-FIN-901 // Treasury Grant Unauthorized Account Rerouting'
       modifications = {
         recipientAccount: "ANON-SWISS-SECRET-ACCOUNT-771",
         amountInr: "990,000,000",
         budgetHead: "UNAUTHORIZED-DIVERSION"
+      }
+    } else if (tamperType === 'malware_ransomware') {
+      signature = 'CVE-2026-MALWARE // Zero-Day Ransomware Ledger Mutation Payload'
+      modifications = {
+        malwareStatus: "LOCKED_BY_CYBER_MALWARE",
+        ransomNote: "Audit ledger encrypted by sovereign breach vector",
+        ransomWallet: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+        dataIntegrity: "COMPROMISED"
       }
     } else {
       modifications = {
@@ -91,8 +109,8 @@ export default function SimulationsPage() {
       }
     }
 
-    tamperRecord(selectedLogId, modifications)
-    setSuccessNotice(`Malicious payload injected into ${selectedLogId}! Observe retroactive failure across the mesh.`)
+    tamperRecord(selectedLogId, modifications, signature)
+    setSuccessNotice(`Malicious payload injected into ${selectedLogId}! Formal Malware Incident Certificate generated.`)
   }
 
   const handleReset = () => {
@@ -234,21 +252,54 @@ export default function SimulationsPage() {
                     <div className="text-[11px] text-slate-400">Reroutes INR 990M agricultural subsidy tranche to anonymous foreign escrow wallet.</div>
                   </div>
                 </label>
+
+                <label className="flex items-center space-x-3 p-3 rounded-xl bg-slate-950 border border-red-900/40 cursor-pointer hover:border-red-500/50">
+                  <input
+                    type="radio"
+                    name="tamperType"
+                    value="malware_ransomware"
+                    checked={tamperType === 'malware_ransomware'}
+                    onChange={() => setTamperType('malware_ransomware')}
+                    className="text-red-500"
+                  />
+                  <div>
+                    <div className="font-bold text-red-400 flex items-center space-x-1.5">
+                      <FileWarning className="w-3.5 h-3.5 text-red-400" />
+                      <span>Ransomware / Malicious Payload Injection</span>
+                    </div>
+                    <div className="text-[11px] text-slate-400">Injects an unauthorized ransomware payload, severs the SHA-256 forward bond, and demands cryptocurrency ransom.</div>
+                  </div>
+                </label>
               </div>
             </div>
 
-            {/* Execute Tamper Button */}
-            <div className="pt-2">
+            {/* Execute Tamper & Malware Simulation Action Buttons */}
+            <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={handleExecuteTamper}
-                className="w-full py-3.5 rounded-xl font-bold bg-red-600 hover:bg-red-500 text-white shadow-crimson-glow transition-all flex items-center justify-center space-x-2"
+                className="py-3 px-4 rounded-xl font-bold bg-red-600 hover:bg-red-500 text-white shadow-crimson-glow transition-all flex items-center justify-center space-x-2 text-xs"
               >
                 <Bug className="w-4 h-4" />
-                <span>Inject Malicious Modification into Local Database</span>
+                <span>Inject Malicious Modification</span>
+              </button>
+
+              <button
+                onClick={() => triggerMalwareIncident('Zero-Day Cryptographic Ransomware Vector', selectedLogId)}
+                className="py-3 px-4 rounded-xl font-bold bg-slate-950 border border-red-500 text-red-300 hover:bg-red-950/60 transition-all flex items-center justify-center space-x-2 text-xs"
+              >
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span>Simulate Malware Attack</span>
               </button>
             </div>
 
           </div>
+
+          {/* Cryptographic File Import & Tamper Verification Sensor */}
+          <FileTamperVerifier 
+            logs={logs} 
+            activeLog={activeLog} 
+            onLogSelect={setSelectedLogId} 
+          />
 
           {/* Quick Verification Redirection Banner */}
           <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
@@ -302,6 +353,16 @@ export default function SimulationsPage() {
                 <pre className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 text-[10px] max-h-56 overflow-y-auto">
                   {JSON.stringify(activeLog?.payload, null, 2)}
                 </pre>
+
+                {/* Injected Payload Certificate Action */}
+                <div className="mt-3">
+                  <InjectedPayloadCertificateButton
+                    payload={activeLog?.payload}
+                    sourceId={activeLog?.id}
+                    sourceName={`${activeLog?.department}: ${activeLog?.title}`}
+                    threatVector={activeLog?.isTampered ? (malwareIncident?.threatSignature || 'ADVERSARIAL_PAYLOAD_MUTATION') : 'GENESIS_BASELINE_PAYLOAD'}
+                  />
+                </div>
               </div>
 
               {activeLog?.isTampered && (
@@ -315,6 +376,59 @@ export default function SimulationsPage() {
             </div>
 
           </div>
+
+          {/* Malware Incident Certificate Card */}
+          {(activeLog?.isTampered || malwareIncident) && (
+            <div className="p-6 rounded-2xl bg-red-950/40 border border-red-500/50 shadow-crimson-glow animate-fadeIn space-y-4">
+              <div className="flex items-center space-x-2.5 pb-3 border-b border-red-500/30 text-red-400">
+                <FileWarning className="w-5 h-5 shrink-0" />
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-100">
+                    Official Malware Incident Certificate
+                  </h4>
+                  <div className="text-[10px] text-red-300 font-mono">
+                    ID: {malwareIncident?.incidentId || 'INC-2026-MAL-DETECTED'}
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-slate-300 leading-relaxed font-mono">
+                A formal security disclosure certificate has been automatically generated for this cryptographic integrity violation.
+              </p>
+
+              <div className="p-3 rounded-xl bg-slate-950/80 border border-red-500/30 font-mono text-[10px] space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Threat Signature:</span>
+                  <span className="text-red-400 font-bold truncate max-w-[150px]">{malwareIncident?.threatSignature}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Hash Check:</span>
+                  <span className="text-red-400 font-bold">MISMATCH / SEV-1</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Consensus:</span>
+                  <span className="text-amber-400">DIVERGENT ROOT</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-1">
+                <button
+                  onClick={() => downloadMalwareCertificate(malwareIncident)}
+                  className="w-full py-2.5 px-4 rounded-xl font-bold bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white shadow-crimson-glow transition-all flex items-center justify-center space-x-2 text-xs"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download Malware Incident Certificate</span>
+                </button>
+
+                <button
+                  onClick={openMalwareModal}
+                  className="w-full py-2 px-4 rounded-xl font-medium bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition-colors text-xs"
+                >
+                  View Certificate Preview & Seal
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>

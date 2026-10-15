@@ -18,6 +18,27 @@ export async function sha256(message) {
   return fallbackSha256(message)
 }
 
+// Native Web Crypto API SHA-256 for File / ArrayBuffer uploads
+export async function calculateFileWebCryptoSha256(file) {
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+      const hashBuffer = await window.crypto.subtle.digest('SHA-256', arrayBuffer)
+      const hashArray = Array.from(new Uint8Array(hashBuffer))
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    }
+    const bytes = new Uint8Array(arrayBuffer)
+    let binary = ''
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i])
+    }
+    return fallbackSha256(binary)
+  } catch (err) {
+    console.error('Web Crypto calculation error:', err)
+    return fallbackSha256(file.name + file.size)
+  }
+}
+
 // Synchronous fast hash fallback for instantaneous rendering
 export function fallbackSha256(ascii) {
   function rightRotate(value, amount) {
@@ -174,3 +195,26 @@ export function calculateMerkleRoot(hashes) {
 
   return '0x' + currentLevel[0]
 }
+
+/**
+ * Cryptographic RBAC Session Signing & Verification
+ * Prevents client-side state injection, localStorage tampering, and unauthorized privilege escalation.
+ */
+const SENTINEL_SESSION_SECRET = 'SENTINEL_GOV_RBAC_SECRET_TOKEN_2026_SOC'
+
+export function generateSessionSignature(userPayload) {
+  if (!userPayload) return ''
+  const { email, role, clearance, sessionStart } = userPayload
+  const rawString = `${email || ''}|${role || ''}|${clearance || ''}|${sessionStart || ''}|${SENTINEL_SESSION_SECRET}`
+  return fallbackSha256(rawString)
+}
+
+export function verifySessionIntegrity(user) {
+  if (!user || typeof user !== 'object') return false
+  if (user.role !== 'Admin' && user.role !== 'Normal User') return false
+  const expectedClearance = user.role === 'Admin' ? 'LEVEL-5 DIRECTIVE ACCESS' : 'LEVEL-2 FIELD AUDITOR'
+  if (user.clearance !== expectedClearance) return false
+  const expectedSig = generateSessionSignature(user)
+  return user.signature === expectedSig
+}
+

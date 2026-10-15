@@ -19,11 +19,21 @@ import {
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAudit } from '../context/AuditContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function LandingPage() {
   const { navigate } = useRouter()
+  const { user } = useAuth()
   const { logs } = useAudit()
   const [activeTab, setActiveTab] = useState('problem') // 'problem' | 'solution' | 'architecture'
+
+  const handleLaunchDashboard = () => {
+    if (!user) {
+      navigate('/login')
+    } else {
+      navigate('/dashboard')
+    }
+  }
 
   return (
     <div className="relative min-h-screen cyber-grid pb-20">
@@ -63,7 +73,7 @@ export default function LandingPage() {
           </button>
 
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={handleLaunchDashboard}
             className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-mono text-sm font-semibold bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-slate-200 transition-all flex items-center justify-center space-x-2"
           >
             <Terminal className="w-4 h-4 text-cyan-400" />

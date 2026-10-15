@@ -6,14 +6,15 @@ import {
   Sun, 
   LogOut, 
   UserCheck, 
-  Clock
+  Clock,
+  Lock
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAuth } from '../context/AuthContext'
 
 export default function SettingsPage() {
   const { navigate } = useRouter()
-  const { user, logout, theme, toggleTheme, switchRole } = useAuth()
+  const { user, isAdmin, openLogoutModal, theme, toggleTheme } = useAuth()
 
   const [elapsedTime, setElapsedTime] = useState('00:00:00')
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
@@ -113,36 +114,27 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Role Switching Controls */}
+          {/* Immutable Clearance & RBAC Role Status */}
           <div className="mt-4 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <div className="text-slate-300 font-bold">Clearance Level & Role:</div>
-              <div className="text-slate-500 text-[11px]">
-                Toggle between Admin (with Tamper Simulation) and Normal User (Public Auditor)
+              <div className="text-slate-300 font-bold flex items-center space-x-2">
+                <Lock className="w-4 h-4 text-cyan-400" />
+                <span>Clearance Level & RBAC Role Status</span>
+              </div>
+              <div className="text-slate-500 text-[11px] mt-0.5">
+                Session role is cryptographically signed and immutable. Role switching is disabled in accordance with RBAC AC-3 policy.
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
-              <button
-                onClick={() => switchRole('Admin')}
-                className={`px-4 py-2 rounded-lg transition-all ${
-                  user?.role === 'Admin'
-                    ? 'bg-cyan-500/20 border border-cyan-500/50 text-cyan-300 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Admin Role
-              </button>
-              <button
-                onClick={() => switchRole('Normal User')}
-                className={`px-4 py-2 rounded-lg transition-all ${
-                  user?.role === 'Normal User'
-                    ? 'bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                Normal User Role
-              </button>
+            <div className="flex items-center space-x-3 bg-slate-950 px-4 py-2.5 rounded-xl border border-slate-800">
+              <div className={`w-2.5 h-2.5 rounded-full ${isAdmin ? 'bg-purple-400 shadow-purple-glow' : 'bg-emerald-400'}`} />
+              <div>
+                <div className="text-xs font-mono font-bold text-slate-200">{user?.role}</div>
+                <div className="text-[10px] font-mono text-cyan-400">{user?.clearance}</div>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-900 border border-slate-700 text-slate-400 uppercase">
+                IMMUTABLE
+              </span>
             </div>
           </div>
         </div>
@@ -216,21 +208,30 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Account Redirection Strip */}
+        {/* Account Redirection & Logout Strip */}
         <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <div className="font-bold text-slate-200">Switch Account or Re-authenticate</div>
+            <div className="font-bold text-slate-200">Session Controls & Clearance Termination</div>
             <div className="text-slate-500 text-[11px]">
-              Returns to public login screen to sign in with different government credentials.
+              Switch operator credentials or safely terminate cryptographic session tokens.
             </div>
           </div>
 
-          <button
-            onClick={() => navigate('/login')}
-            className="px-5 py-2.5 rounded-xl font-mono text-xs bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition-colors"
-          >
-            Switch Account &rarr;
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => navigate('/login')}
+              className="px-4 py-2.5 rounded-xl font-mono text-xs bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition-colors"
+            >
+              Switch Account &rarr;
+            </button>
+            <button
+              onClick={openLogoutModal}
+              className="px-4 py-2.5 rounded-xl font-mono text-xs bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-500/40 hover:border-red-400 shadow-crimson-glow transition-all flex items-center space-x-1.5"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Log Out</span>
+            </button>
+          </div>
         </div>
 
       </div>

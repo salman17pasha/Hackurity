@@ -116,7 +116,7 @@ export default function LoginPage() {
         email: formData.email,
         role: formData.role
       })
-      navigate('/dashboard')
+      navigate('/login-success')
     }, 700)
   }
 
@@ -165,6 +165,7 @@ export default function LoginPage() {
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               type="button"
+              id="btn-fill-admin"
               onClick={() => handleQuickFill('Admin')}
               className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 transition-colors"
             >
@@ -172,6 +173,7 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
+              id="btn-fill-normal-user"
               onClick={() => handleQuickFill('Normal User')}
               className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60 transition-colors"
             >
@@ -338,6 +340,7 @@ export default function LoginPage() {
             <div className="pt-2">
               <button
                 type="submit"
+                id="btn-login-submit"
                 disabled={successAnimation}
                 className="w-full py-3.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all transform hover:-translate-y-0.5 flex items-center justify-center space-x-2 disabled:opacity-80"
               >

@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { INITIAL_LOGS } from '../data/mockLogs'
 import { fallbackSha256, calculateMerkleRoot } from '../utils/crypto'
+import { generateMalwareCertificateData } from '../utils/certificateGenerator'
 
 const AuditContext = createContext(null)
 
@@ -15,11 +16,33 @@ export function AuditProvider({ children }) {
     details: 'System integrity 100% verified against Ethereum L2 root commitment.'
   })
 
+  // Folder Import Queue State & Modal
+  const [importedFolderQueue, setImportedFolderQueue] = useState([])
+  const [importedFolderName, setImportedFolderName] = useState('')
+  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false)
+
+  // Malware Detection Certificate State & Modal
+  const [malwareIncident, setMalwareIncident] = useState(null)
+  const [isMalwareModalOpen, setIsMalwareModalOpen] = useState(false)
+
   // Canonical Smart Contract Merkle Root anchored from initial state
-  const onChainMerkleRoot = useMemo(() => {
+  const [onChainMerkleRoot, setOnChainMerkleRoot] = useState(() => {
     const hashes = INITIAL_LOGS.map(l => l.originalHash)
     return calculateMerkleRoot(hashes)
+  })
+
+  // Admin function: Commit new state Merkle root to decentralized smart contract
+  const commitNewMerkleAnchor = useCallback((newRoot) => {
+    setOnChainMerkleRoot(newRoot)
+    return {
+      txHash: `0x${fallbackSha256(newRoot + Date.now()).substring(0, 40)}`,
+      blockNumber: 18409240 + Math.floor(Math.random() * 50),
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC',
+      merkleRoot: newRoot,
+      status: 'FINALIZED_ON_L2'
+    }
   }, [])
+
 
   // Check current chain validity helper
   const performIntegrityAudit = useCallback(() => {
@@ -70,7 +93,9 @@ export function AuditProvider({ children }) {
   }, [logs, onChainMerkleRoot])
 
   // Tamper record simulation (Admin function)
-  const tamperRecord = (logId, modifiedFields) => {
+  const tamperRecord = (logId, modifiedFields, threatSignature = null) => {
+    let affectedItem = null
+
     setLogs(prevLogs => {
       return prevLogs.map(item => {
         if (item.id === logId) {
@@ -80,7 +105,7 @@ export function AuditProvider({ children }) {
           const blockContent = `${item.prevHash}|${item.blockHeight}|${item.timestamp}|${item.department}|${item.action}|${rawPayloadString}|${item.actor}`
           const alteredHash = fallbackSha256(blockContent)
 
-          return {
+          affectedItem = {
             ...item,
             payload: updatedPayload,
             currentHash: alteredHash,
@@ -88,6 +113,7 @@ export function AuditProvider({ children }) {
             tamperedAt: new Date().toISOString(),
             status: "Tampered (Divergent Hash)"
           }
+          return affectedItem
         }
         return item
       })
@@ -99,6 +125,26 @@ export function AuditProvider({ children }) {
       status: 'TAMPERED',
       details: `Alert: Unauthorized modification flagged on Record ${logId}. Run Verification Engine to inspect divergence.`
     }))
+
+    // Generate formal malware/tampering certificate
+    const cert = generateMalwareCertificateData({
+      record: affectedItem || { id: logId, blockHeight: 1001, department: 'Judiciary', title: 'Tampered Audit Record' },
+      threatSignature: threatSignature || 'CVE-2026-8819 // Tamper-Chain Malicious Payload Mutation',
+      details: `Malicious payload injection executed on record ${logId}. SHA-256 hash diverged from consensus anchor.`
+    })
+    setMalwareIncident(cert)
+    return cert
+  }
+
+  // Trigger manual or simulated malware alert
+  const triggerMalwareIncident = (threatType = 'Zero-Day Ransomware Vector', targetLogId = null) => {
+    const target = (targetLogId ? logs.find(l => l.id === targetLogId) : logs[0]) || logs[0]
+    tamperRecord(target.id, {
+      malwareSignature: "RANSOMWARE-PAYLOAD-INJECTED",
+      encryptionStatus: "LOCKED_BY_MALWARE",
+      demandedRansomBtc: "4.5 BTC"
+    }, `CVE-2026-MALWARE // ${threatType}`)
+    setIsMalwareModalOpen(true)
   }
 
   // Restore single record
@@ -123,6 +169,9 @@ export function AuditProvider({ children }) {
   // Restore entire chain to genesis-verified state
   const resetAllRecords = () => {
     setLogs(INITIAL_LOGS)
+    setMalwareIncident(null)
+    const initialRoot = calculateMerkleRoot(INITIAL_LOGS.map(l => l.originalHash))
+    setOnChainMerkleRoot(initialRoot)
     setLastVerificationResult({
       status: 'VALID',
       isValid: true,
@@ -131,6 +180,74 @@ export function AuditProvider({ children }) {
       brokenChainIndices: [],
       details: 'Blockchain restored to genesis state. All cryptographic blocks verified.'
     })
+  }
+
+  // Folder Import Handlers
+  const addImportedFiles = (filesList, folderName = 'Local System Folder') => {
+    setImportedFolderName(folderName)
+    setImportedFolderQueue(filesList)
+  }
+
+  const clearImportedQueue = () => {
+    setImportedFolderQueue([])
+    setImportedFolderName('')
+  }
+
+  // Ingest imported folder files into the live hash-chain ledger
+  const batchIngestImportedFiles = () => {
+    if (!importedFolderQueue.length) return 0
+
+    setLogs(prev => {
+      let currentChain = [...prev]
+      let lastBlock = currentChain[currentChain.length - 1]
+
+      importedFolderQueue.forEach((file, idx) => {
+        const newHeight = lastBlock.blockHeight + 1 + idx
+        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
+        const newId = `LOG-${newHeight}`
+        const filePayload = {
+          fileName: file.name,
+          relativePath: file.path,
+          fileSize: file.size,
+          mimeType: file.type || 'application/octet-stream',
+          localChecksum: file.checksum,
+          importedVia: 'GovChain System Folder Ingestion Pipeline',
+          ingestTimestamp: timestamp
+        }
+
+        const rawPayloadString = JSON.stringify(filePayload)
+        const blockContent = `${lastBlock.currentHash}|${newHeight}|${timestamp}|Local Ingestion Mesh|SYSTEM_FOLDER_INGEST|${rawPayloadString}|SYSTEM-FOLDER-PIPELINE`
+        const currentHash = fallbackSha256(blockContent)
+
+        const newLog = {
+          id: newId,
+          blockHeight: newHeight,
+          timestamp,
+          department: "Local Ingestion Mesh",
+          title: `System Ingest: ${file.name}`,
+          actor: "OFFICER-LOCAL-PIPELINE",
+          action: "SYSTEM_FOLDER_INGEST",
+          payload: filePayload,
+          onChainTx: `0x${fallbackSha256(newId + timestamp)}`,
+          prevHash: lastBlock.currentHash,
+          currentHash,
+          isTampered: false,
+          originalPayload: JSON.parse(JSON.stringify(filePayload)),
+          originalHash: currentHash,
+          blockContent,
+          status: "Anchored"
+        }
+
+        currentChain.push(newLog)
+        lastBlock = newLog
+      })
+
+      return currentChain
+    })
+
+    // Mark imported queue items as anchored
+    setImportedFolderQueue(prev => prev.map(f => ({ ...f, status: 'ANCHORED_IN_CHAIN' })))
+    return importedFolderQueue.length
   }
 
   // Streaming simulated incoming government events
@@ -209,8 +326,25 @@ export function AuditProvider({ children }) {
         tamperRecord,
         restoreRecord,
         resetAllRecords,
+        commitNewMerkleAnchor,
         isStreaming,
-        setIsStreaming
+        setIsStreaming,
+        // Folder Import Features
+        importedFolderQueue,
+        importedFolderName,
+        isFolderModalOpen,
+        openFolderModal: () => setIsFolderModalOpen(true),
+        closeFolderModal: () => setIsFolderModalOpen(false),
+        addImportedFiles,
+        batchIngestImportedFiles,
+        clearImportedQueue,
+        // Malware Detection Features
+        malwareIncident,
+        isMalwareModalOpen,
+        openMalwareModal: () => setIsMalwareModalOpen(true),
+        closeMalwareModal: () => setIsMalwareModalOpen(false),
+        triggerMalwareIncident,
+        setMalwareIncident
       }}
     >
       {children}
