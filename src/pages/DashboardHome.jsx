@@ -10,7 +10,9 @@ import {
   FolderUp,
   Download,
   HardDrive,
-  Cpu
+  Cpu,
+  Bot,
+  Sparkles
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from '../context/RouterContext'
@@ -222,6 +224,52 @@ export default function DashboardHome() {
           </button>
         </div>
       )}
+
+      {/* Sentinel AI Knowledge Assistant Banner */}
+      <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-cyan-950/40 via-slate-900/90 to-slate-950/90 border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center space-x-3.5">
+          <div className="p-2.5 rounded-xl bg-cyan-950/80 border border-cyan-500/50 text-cyan-400 shrink-0">
+            <Bot className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-bold text-slate-100 font-mono">
+                SENTINEL AI ASSISTANT // AUDITOR KNOWLEDGE BASE
+              </span>
+              <span className="px-2 py-0.5 text-[10px] font-mono uppercase bg-cyan-950 border border-cyan-500/40 text-cyan-300 rounded">
+                README INDEXED
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Have questions about hash-chaining, Merkle anchors, RBAC privileges, or tamper resistance? Ask the AI assistant directly.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai', { detail: { prompt: 'How does the hash-chain work?' } }))}
+            className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 text-xs font-mono transition-colors flex items-center space-x-1.5 cursor-pointer"
+          >
+            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <span>Hash-Chain Mechanics?</span>
+          </button>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai', { detail: { prompt: 'What is the role of an auditor?' } }))}
+            className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 text-xs font-mono transition-colors flex items-center space-x-1.5 cursor-pointer"
+          >
+            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <span>Auditor Role?</span>
+          </button>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai', { detail: { prompt: 'How are Merkle roots anchored to the smart contract?' } }))}
+            className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 text-xs font-mono transition-colors flex items-center space-x-1.5 cursor-pointer"
+          >
+            <Sparkles className="w-3 h-3 text-cyan-400" />
+            <span>Merkle Anchors?</span>
+          </button>
+        </div>
+      </div>
 
       {/* Main Interactive Card Grid Layout */}
       <div className="mb-6">
@@ -491,6 +539,36 @@ export default function DashboardHome() {
               </div>
             </div>
           )}
+
+          {/* Card 7: Sentinel AI Assistant */}
+          <CyberCard
+            title="Sentinel AI Assistant"
+            subtitle="README.md Knowledge Engine"
+            badge="DOCS RAG"
+            badgeVariant="cyan"
+            icon={Bot}
+            accentColor="cyan"
+            footerText="Launch Sentinel AI Assistant"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai'))}
+          >
+            <p className="text-xs text-slate-400 mb-3">
+              Intelligent SOC assistant indexed against <code className="text-cyan-300">README.md</code>. Get immediate answers regarding hash-chains, Merkle roots, and auditor roles.
+            </p>
+            <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800/80 font-mono text-[11px] space-y-1">
+              <div className="flex justify-between text-slate-400">
+                <span>Knowledge Base:</span>
+                <span className="text-cyan-300 font-bold">README.md (v2.4-SOC)</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>System Context:</span>
+                <span className="text-emerald-400">353 Lines • 13 Sections</span>
+              </div>
+              <div className="flex justify-between text-slate-400">
+                <span>Inquiry Engine:</span>
+                <span className="text-cyan-400 hover:underline">Click to Consult Assistant &rarr;</span>
+              </div>
+            </div>
+          </CyberCard>
 
         </div>
       </div>

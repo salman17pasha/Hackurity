@@ -15,7 +15,9 @@ import {
   Terminal,
   Activity,
   ServerOff,
-  GitCommit
+  GitCommit,
+  Bot,
+  Sparkles
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAudit } from '../context/AuditContext'
@@ -78,6 +80,14 @@ export default function LandingPage() {
           >
             <Terminal className="w-4 h-4 text-cyan-400" />
             <span>Launch SOC Dashboard</span>
+          </button>
+
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai'))}
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-mono text-sm font-semibold bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyan-300 shadow-cyan-glow transition-all flex items-center justify-center space-x-2 cursor-pointer"
+          >
+            <Bot className="w-4 h-4 text-cyan-400" />
+            <span>Consult Sentinel AI</span>
           </button>
         </div>
 

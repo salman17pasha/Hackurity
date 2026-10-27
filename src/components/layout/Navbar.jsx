@@ -1,4 +1,4 @@
-import { Shield, ShieldAlert, LogOut, Moon, Sun, Lock } from 'lucide-react'
+import { Shield, ShieldAlert, LogOut, Moon, Sun, Lock, Bot } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useRouter } from '../../context/RouterContext'
 import { useAudit } from '../../context/AuditContext'
@@ -88,6 +88,16 @@ export default function Navbar() {
             <span className={`w-2 h-2 rounded-full ${isTampered ? 'bg-red-500' : 'bg-emerald-400 animate-ping'}`} />
             <span>{isTampered ? 'INTEGRITY ALERT' : 'MESH: OPTIMAL'}</span>
           </div>
+
+          {/* Sentinel AI Assistant Quick Launcher */}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai'))}
+            title="Open Sentinel AI Assistant (README.md Knowledge Base)"
+            className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg border border-cyan-500/40 bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 text-xs font-mono shadow-cyan-glow transition-all cursor-pointer"
+          >
+            <Bot className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden md:inline">AI Guide</span>
+          </button>
 
           {/* Theme Toggle */}
           <button

@@ -10,6 +10,7 @@ import { Lock } from 'lucide-react'
 import LogoutModal from './components/ui/LogoutModal'
 import FolderImportModal from './components/features/FolderImportModal'
 import MalwareCertificateModal from './components/ui/MalwareCertificateModal'
+import ChatbotWidget from './components/features/ChatbotWidget'
 
 // Page Components
 import LandingPage from './pages/LandingPage'
@@ -134,6 +135,9 @@ function AppContent() {
         onClose={closeMalwareModal}
         certData={malwareIncident}
       />
+
+      {/* Floating Sentinel AI Assistant Chatbot Widget */}
+      <ChatbotWidget />
     </div>
   )
 }
