@@ -2,10 +2,12 @@ import { useEffect } from 'react'
 import { ShieldAlert, LogOut, X, AlertTriangle } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useRouter } from '../../context/RouterContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function LogoutModal() {
   const { isLogoutModalOpen, closeLogoutModal, confirmLogout, user } = useAuth()
   const { navigate } = useRouter()
+  const { t } = useLanguage()
 
   // Handle ESC key press to close modal
   useEffect(() => {
@@ -41,7 +43,7 @@ export default function LogoutModal() {
         {/* Close Icon Button */}
         <button
           onClick={closeLogoutModal}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 transition-colors cursor-pointer"
           title="Cancel and close"
           aria-label="Close"
         >
@@ -60,10 +62,10 @@ export default function LogoutModal() {
               </span>
             </div>
             <h3 id="logout-title" className="text-lg font-bold text-slate-100">
-              Confirm Session Termination
+              {t('logoutModalTitle')}
             </h3>
             <p className="text-sm font-semibold text-slate-200 mt-2">
-              Are you sure you want to log out?
+              {t('logoutModalPrompt')}
             </p>
           </div>
         </div>
@@ -72,14 +74,14 @@ export default function LogoutModal() {
         <div className="mt-4 p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 text-xs font-mono text-slate-400 space-y-1.5">
           <div className="flex justify-between">
             <span className="text-slate-500">Active Operator:</span>
-            <span className="text-slate-200 font-semibold">{user?.name || 'Authorized Auditor'}</span>
+            <span className="text-slate-200 font-semibold">{user?.name || t('dashWelcomeDefault')}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">Clearance Tier:</span>
             <span className="text-cyan-400">{user?.clearance || 'LEVEL-2 FIELD AUDITOR'}</span>
           </div>
           <p className="pt-2 text-[11px] text-slate-400 border-t border-slate-800/80">
-            Terminating your session will revoke cryptographic authentication tokens and return you to the access portal.
+            {t('logoutModalDesc')}
           </p>
         </div>
 
@@ -88,19 +90,19 @@ export default function LogoutModal() {
           <button
             type="button"
             onClick={closeLogoutModal}
-            className="px-4 py-2.5 rounded-xl text-xs font-mono font-semibold text-slate-300 bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all"
+            className="px-4 py-2.5 rounded-xl text-xs font-mono font-semibold text-slate-300 bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all cursor-pointer"
           >
-            Cancel
+            {t('logoutModalCancel')}
           </button>
           
           <button
             type="button"
             id="btn-confirm-logout"
             onClick={handleOkay}
-            className="px-6 py-2.5 rounded-xl text-xs font-mono font-bold text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-crimson-glow transition-all flex items-center space-x-2"
+            className="px-6 py-2.5 rounded-xl text-xs font-mono font-bold text-white bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-crimson-glow transition-all flex items-center space-x-2 cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Okay</span>
+            <span>{t('logoutModalConfirm')}</span>
           </button>
         </div>
       </div>

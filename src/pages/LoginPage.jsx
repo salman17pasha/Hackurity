@@ -12,15 +12,19 @@ import {
   Sparkles,
   Eye,
   EyeOff,
-  Terminal
+  Terminal,
+  Languages
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from '../context/RouterContext'
+import { useLanguage } from '../context/LanguageContext'
+import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import { sanitizeInput } from '../utils/crypto'
 
 export default function LoginPage() {
   const { login } = useAuth()
   const { navigate } = useRouter()
+  const { t } = useLanguage()
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -149,35 +153,39 @@ export default function LoginPage() {
             <Lock className="w-8 h-8" />
           </div>
           <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight">
-            GovChain Sentinel Authentication
+            {t('loginTitle')}
           </h1>
           <p className="mt-2 text-xs font-mono text-slate-400">
-            Secure Cryptographic Login with Real-Time XSS Sanitization & Role Authorization
+            {t('loginSubtitle')}
           </p>
+
+          <div className="mt-4 flex items-center justify-center">
+            <LanguageSwitcher />
+          </div>
         </div>
 
         {/* Quick Demo Pre-fill Pill Bar */}
         <div className="mb-6 p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
           <div className="flex items-center space-x-2 text-slate-400">
             <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span>Reviewer Quick Demo:</span>
+            <span>{t('loginQuickFillTitle')}</span>
           </div>
           <div className="flex items-center space-x-2 w-full sm:w-auto">
             <button
               type="button"
               id="btn-fill-admin"
               onClick={() => handleQuickFill('Admin')}
-              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 transition-colors"
+              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-cyan-950/70 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 transition-colors cursor-pointer"
             >
-              Fill Admin
+              {t('loginFillAdmin')}
             </button>
             <button
               type="button"
               id="btn-fill-normal-user"
               onClick={() => handleQuickFill('Normal User')}
-              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60 transition-colors"
+              className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60 transition-colors cursor-pointer"
             >
-              Fill Normal User
+              {t('loginFillAuditor')}
             </button>
           </div>
         </div>
@@ -188,7 +196,7 @@ export default function LoginPage() {
           {/* Subtle Cyber Corner Indicator */}
           <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden pointer-events-none">
             <div className="absolute transform rotate-45 bg-cyan-500/20 text-cyan-300 text-[9px] font-mono py-1 right-[-35px] top-[18px] w-[120px] text-center border-b border-cyan-500/40">
-              SOC SECURE
+              CITIZEN SECURE
             </div>
           </div>
 
@@ -205,7 +213,7 @@ export default function LoginPage() {
             {/* Full Name */}
             <div>
               <label className="block text-xs font-mono font-medium text-slate-300 mb-1.5">
-                Full Name <span className="text-cyan-400">*</span>
+                {t('loginFullNameLabel')} <span className="text-cyan-400">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -216,7 +224,7 @@ export default function LoginPage() {
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleInputChange}
-                  placeholder="e.g. Commander Vikram Dev"
+                  placeholder={t('loginFullNamePlaceholder')}
                   required
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500 text-slate-100 rounded-xl text-xs font-mono outline-none transition-all placeholder:text-slate-600"
                 />
@@ -226,7 +234,7 @@ export default function LoginPage() {
             {/* Email Address */}
             <div>
               <label className="block text-xs font-mono font-medium text-slate-300 mb-1.5">
-                Official Email Address <span className="text-cyan-400">*</span>
+                {t('loginEmailLabel')} <span className="text-cyan-400">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -237,7 +245,7 @@ export default function LoginPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="e.g. officer@sentinel.gov.in"
+                  placeholder={t('loginEmailPlaceholder')}
                   required
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500 text-slate-100 rounded-xl text-xs font-mono outline-none transition-all placeholder:text-slate-600"
                 />
@@ -247,7 +255,7 @@ export default function LoginPage() {
             {/* Role Selector */}
             <div>
               <label className="block text-xs font-mono font-medium text-slate-300 mb-1.5">
-                Security Role Clearance <span className="text-cyan-400">*</span>
+                {t('loginRoleLabel')} <span className="text-cyan-400">*</span>
               </label>
               <div className="relative">
                 <select
@@ -256,8 +264,8 @@ export default function LoginPage() {
                   onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
                   className="w-full px-4 py-2.5 bg-slate-950/80 border border-slate-800 focus:border-cyan-500/80 focus:ring-1 focus:ring-cyan-500 text-slate-100 rounded-xl text-xs font-mono outline-none transition-all appearance-none cursor-pointer"
                 >
-                  <option value="Admin">Admin (Full Control, Tamper Simulations, Master Chain Audit)</option>
-                  <option value="Normal User">Normal User (Public Auditor, Live Stream, Verification Engine)</option>
+                  <option value="Admin">Admin (Full Control, Security Tests, Master Chain Audit)</option>
+                  <option value="Normal User">Citizen / Field Auditor (Public Ledger, Seal Verification)</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-cyan-400 text-xs font-mono">
                   ▼
@@ -265,8 +273,8 @@ export default function LoginPage() {
               </div>
               <p className="mt-1 text-[11px] font-mono text-slate-500">
                 {formData.role === 'Admin' 
-                  ? '🛡️ Admin grants access to Tamper Simulation & Master Chain Controls.' 
-                  : '🔍 Normal User grants access to Live Logs, Hash Inspector, and Verification.'}
+                  ? '🛡️ Admin grants access to Safety Testing & Master Chain Controls.' 
+                  : '🔍 Citizen Auditor grants access to Public Ledger, Record History, and Verifier.'}
               </p>
             </div>
 
@@ -274,7 +282,7 @@ export default function LoginPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono font-medium text-slate-300 mb-1.5">
-                  Password <span className="text-cyan-400">*</span>
+                  {t('loginPasswordLabel')} <span className="text-cyan-400">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -292,7 +300,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -301,7 +309,7 @@ export default function LoginPage() {
 
               <div>
                 <label className="block text-xs font-mono font-medium text-slate-300 mb-1.5">
-                  Re-enter Password <span className="text-cyan-400">*</span>
+                  {t('loginConfirmPasswordLabel')} <span className="text-cyan-400">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -342,7 +350,7 @@ export default function LoginPage() {
                 type="submit"
                 id="btn-login-submit"
                 disabled={successAnimation}
-                className="w-full py-3.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all transform hover:-translate-y-0.5 flex items-center justify-center space-x-2 disabled:opacity-80"
+                className="w-full py-3.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all transform hover:-translate-y-0.5 flex items-center justify-center space-x-2 disabled:opacity-80 cursor-pointer"
               >
                 {successAnimation ? (
                   <>
@@ -351,7 +359,7 @@ export default function LoginPage() {
                   </>
                 ) : (
                   <>
-                    <span>Initialize Session & Open Dashboard</span>
+                    <span>{t('loginBtnSubmit')}</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -377,11 +385,6 @@ export default function LoginPage() {
             </div>
           )}
 
-        </div>
-
-        {/* Security Compliance Footnote */}
-        <div className="mt-6 text-center text-xs font-mono text-slate-500">
-          Enforcing strict TLS 1.3, client-side input sanitization, and SHA-256 session attestation.
         </div>
 
       </div>

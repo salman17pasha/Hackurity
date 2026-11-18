@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { 
   FlaskConical, 
   ArrowLeft, 
@@ -12,11 +12,13 @@ import {
   FileWarning, 
   ArrowRight,
   UserCheck,
-  Download
+  Download,
+  Upload
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAuth } from '../context/AuthContext'
 import { useAudit } from '../context/AuditContext'
+import { useLanguage } from '../context/LanguageContext'
 import { downloadMalwareCertificate } from '../utils/certificateGenerator'
 import FileTamperVerifier from '../components/features/FileTamperVerifier'
 import InjectedPayloadCertificateButton from '../components/features/InjectedPayloadCertificateButton'
@@ -24,11 +26,14 @@ import InjectedPayloadCertificateButton from '../components/features/InjectedPay
 export default function SimulationsPage() {
   const { navigate } = useRouter()
   const { user, isAdmin } = useAuth()
+  const { t } = useLanguage()
+  const fileInputRef = useRef(null)
   const { 
     logs, 
     tamperRecord, 
     restoreRecord, 
     resetAllRecords, 
+    importFileRecord,
     lastVerificationResult,
     malwareIncident,
     openMalwareModal,
@@ -50,23 +55,43 @@ export default function SimulationsPage() {
             <Lock className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-100">
-            Access Restricted: Level-5 Clearance Required
+            {t('cardSimRestrictedTitle')}
           </h1>
           <p className="text-xs font-mono text-slate-400 mt-2">
-            The Tamper Simulation module contains active adversarial penetration controls restricted to Administrators. Privilege escalation from this interface is disabled by RBAC policy.
+            {t('cardSimRestrictedDesc')}
           </p>
 
           <div className="mt-6 flex items-center justify-center">
             <button
               onClick={() => navigate('/dashboard')}
-              className="px-6 py-2.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all"
+              className="px-6 py-2.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all cursor-pointer"
             >
-              Return to Dashboard
+              {t('logsReturnDash')}
             </button>
           </div>
         </div>
       </div>
     )
+  }
+
+  const handleFileImport = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const newRecord = await importFileRecord(file)
+      if (newRecord) {
+        setSelectedLogId(newRecord.id)
+        setSuccessNotice(t('simImportSuccess', { 
+          name: newRecord.payload?.fileName || file.name, 
+          id: newRecord.id 
+        }))
+      }
+    } catch (err) {
+      console.error('File import error:', err)
+    } finally {
+      if (e.target) e.target.value = ''
+    }
   }
 
   const handleExecuteTamper = () => {
@@ -109,13 +134,23 @@ export default function SimulationsPage() {
       }
     }
 
+    // If an imported file is selected, also alter its file-level checksum & content in simulated state
+    if (activeLog?.isImported) {
+      modifications = {
+        ...modifications,
+        fileChecksum: `0xBAD_${(activeLog.payload?.fileChecksum || 'DIGEST').substring(2, 10)}_MUTATED`,
+        contentPreview: `[CORRUPTED FILE BYTE MUTATION: Content altered in local storage]`,
+        tamperState: "PAYLOAD_ALTERED_IN_STORAGE"
+      }
+    }
+
     tamperRecord(selectedLogId, modifications, signature)
-    setSuccessNotice(`Malicious payload injected into ${selectedLogId}! Formal Malware Incident Certificate generated.`)
+    setSuccessNotice(`Malicious payload injected into ${selectedLogId}! Formal Incident Certificate generated.`)
   }
 
   const handleReset = () => {
     resetAllRecords()
-    setSuccessNotice('Blockchain restored to 100% verified pristine genesis state.')
+    setSuccessNotice('All records restored to original valid cryptographic state.')
   }
 
   return (
@@ -125,32 +160,32 @@ export default function SimulationsPage() {
       <div className="pb-6 mb-6 border-b border-slate-800">
         <button
           onClick={() => navigate('/dashboard')}
-          className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2"
+          className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Return to Dashboard Overview</span>
+          <span>{t('simReturnDash')}</span>
         </button>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center space-x-2">
               <h1 className="text-2xl font-extrabold text-slate-100">
-                Adversarial Tamper Simulation Lab
+                {t('simHeaderTitle')}
               </h1>
               <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-950/70 border border-amber-500/40 text-amber-300">
-                HACKATHON EVALUATION
+                SAFETY SIMULATION
               </span>
             </div>
             <p className="text-xs font-mono text-slate-400 mt-1">
-              Simulate rogue DB administrator SQL mutations to prove immediate mathematical detection.
+              {t('simHeaderDesc')}
             </p>
           </div>
 
           <button
             onClick={handleReset}
-            className="px-4 py-2 rounded-xl text-xs font-mono bg-slate-900 border border-slate-700 hover:border-emerald-500/40 text-slate-200 hover:text-emerald-400 transition-all flex items-center space-x-2"
+            className="px-4 py-2 rounded-xl text-xs font-mono bg-slate-900 border border-slate-700 hover:border-emerald-500/40 text-slate-200 hover:text-emerald-400 transition-all flex items-center space-x-2 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Reset Chain to Clean State</span>
+            <span>{t('simResetBtn')}</span>
           </button>
         </div>
       </div>
@@ -164,7 +199,7 @@ export default function SimulationsPage() {
           </div>
           <button
             onClick={() => setSuccessNotice('')}
-            className="text-slate-400 hover:text-slate-200 ml-4"
+            className="text-slate-400 hover:text-slate-200 ml-4 cursor-pointer"
           >
             &times;
           </button>
@@ -180,32 +215,64 @@ export default function SimulationsPage() {
             <div className="flex items-center space-x-3 pb-3 border-b border-slate-800">
               <FlaskConical className="w-5 h-5 text-amber-400" />
               <h2 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
-                Select Compromise Vector
+                {t('simSelectVectorTitle')}
               </h2>
             </div>
 
-            {/* Target Block Selector */}
+            {/* Target Block Selector & Additive File Import Action */}
             <div>
-              <label className="block text-slate-300 mb-1.5 font-bold">
-                Target Record to Corrupt:
-              </label>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                <label className="block text-slate-300 font-bold">
+                  {t('simTargetLabel')}
+                </label>
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-lg text-xs font-mono bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 hover:text-cyan-200 transition-all cursor-pointer shadow-sm"
+                    title={t('simImportFileHint')}
+                  >
+                    <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>{t('simImportFileBtn')}</span>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileImport}
+                    className="hidden"
+                    accept=".pdf,.csv,.json,.docx,.doc,.txt,.log,.xlsx"
+                  />
+                </div>
+              </div>
+
               <select
                 value={selectedLogId}
                 onChange={(e) => setSelectedLogId(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-amber-500 text-slate-100 rounded-xl outline-none"
+                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 focus:border-amber-500 text-slate-100 rounded-xl outline-none cursor-pointer"
               >
-                {logs.map((log) => (
-                  <option key={log.id} value={log.id}>
-                    {log.id} (#{log.blockHeight}) - {log.department}: {log.title} {log.isTampered ? '[ALREADY TAMPERED]' : ''}
-                  </option>
-                ))}
+                <optgroup label={t('simSelectRecordOpt')}>
+                  {logs.filter(l => !l.isImported).map((log) => (
+                    <option key={log.id} value={log.id}>
+                      {log.id} (#{log.blockHeight}) - {log.department}: {log.title} {log.isTampered ? `[${t('simAlteredTag')}]` : ''}
+                    </option>
+                  ))}
+                </optgroup>
+                {logs.some(l => l.isImported) && (
+                  <optgroup label={t('simSelectImportedOpt')}>
+                    {logs.filter(l => l.isImported).map((log) => (
+                      <option key={log.id} value={log.id}>
+                        📁 {log.id} (#{log.blockHeight}) - {log.title} {log.isTampered ? `[${t('simAlteredTag')}]` : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
             </div>
 
             {/* Attack Mutation Type */}
             <div>
               <label className="block text-slate-300 mb-1.5 font-bold">
-                Adversary Attack Type:
+                {t('simAttackTypeLabel')}
               </label>
               <div className="space-y-2">
                 <label className="flex items-center space-x-3 p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
@@ -215,11 +282,11 @@ export default function SimulationsPage() {
                     value="fir_dismiss"
                     checked={tamperType === 'fir_dismiss'}
                     onChange={() => setTamperType('fir_dismiss')}
-                    className="text-amber-500"
+                    className="text-amber-500 cursor-pointer"
                   />
                   <div>
-                    <div className="font-bold text-slate-200">Judiciary FIR Erasure / Dismissal</div>
-                    <div className="text-[11px] text-slate-400">Silently alters accused name, wipes out charges, and grants bail without judge consent.</div>
+                    <div className="font-bold text-slate-200">{t('simAttack1Title')}</div>
+                    <div className="text-[11px] text-slate-400">{t('simAttack1Desc')}</div>
                   </div>
                 </label>
 
@@ -230,11 +297,11 @@ export default function SimulationsPage() {
                     value="land_theft"
                     checked={tamperType === 'land_theft'}
                     onChange={() => setTamperType('land_theft')}
-                    className="text-amber-500"
+                    className="text-amber-500 cursor-pointer"
                   />
                   <div>
-                    <div className="font-bold text-slate-200">Land Title Transfer Hijack</div>
-                    <div className="text-[11px] text-slate-400">Modifies grantee to offshore shell company and slashes recorded transaction value to INR 1,000.</div>
+                    <div className="font-bold text-slate-200">{t('simAttack2Title')}</div>
+                    <div className="text-[11px] text-slate-400">{t('simAttack2Desc')}</div>
                   </div>
                 </label>
 
@@ -245,11 +312,11 @@ export default function SimulationsPage() {
                     value="treasury_divert"
                     checked={tamperType === 'treasury_divert'}
                     onChange={() => setTamperType('treasury_divert')}
-                    className="text-amber-500"
+                    className="text-amber-500 cursor-pointer"
                   />
                   <div>
-                    <div className="font-bold text-slate-200">Treasury Disbursal Diversion</div>
-                    <div className="text-[11px] text-slate-400">Reroutes INR 990M agricultural subsidy tranche to anonymous foreign escrow wallet.</div>
+                    <div className="font-bold text-slate-200">{t('simAttack3Title')}</div>
+                    <div className="text-[11px] text-slate-400">{t('simAttack3Desc')}</div>
                   </div>
                 </label>
 
@@ -260,14 +327,14 @@ export default function SimulationsPage() {
                     value="malware_ransomware"
                     checked={tamperType === 'malware_ransomware'}
                     onChange={() => setTamperType('malware_ransomware')}
-                    className="text-red-500"
+                    className="text-red-500 cursor-pointer"
                   />
                   <div>
                     <div className="font-bold text-red-400 flex items-center space-x-1.5">
                       <FileWarning className="w-3.5 h-3.5 text-red-400" />
-                      <span>Ransomware / Malicious Payload Injection</span>
+                      <span>{t('simAttack4Title')}</span>
                     </div>
-                    <div className="text-[11px] text-slate-400">Injects an unauthorized ransomware payload, severs the SHA-256 forward bond, and demands cryptocurrency ransom.</div>
+                    <div className="text-[11px] text-slate-400">{t('simAttack4Desc')}</div>
                   </div>
                 </label>
               </div>
@@ -277,18 +344,18 @@ export default function SimulationsPage() {
             <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={handleExecuteTamper}
-                className="py-3 px-4 rounded-xl font-bold bg-red-600 hover:bg-red-500 text-white shadow-crimson-glow transition-all flex items-center justify-center space-x-2 text-xs"
+                className="py-3 px-4 rounded-xl font-bold bg-red-600 hover:bg-red-500 text-white shadow-crimson-glow transition-all flex items-center justify-center space-x-2 text-xs cursor-pointer"
               >
                 <Bug className="w-4 h-4" />
-                <span>Inject Malicious Modification</span>
+                <span>{t('simInjectBtn')}</span>
               </button>
 
               <button
                 onClick={() => triggerMalwareIncident('Zero-Day Cryptographic Ransomware Vector', selectedLogId)}
-                className="py-3 px-4 rounded-xl font-bold bg-slate-950 border border-red-500 text-red-300 hover:bg-red-950/60 transition-all flex items-center justify-center space-x-2 text-xs"
+                className="py-3 px-4 rounded-xl font-bold bg-slate-950 border border-red-500 text-red-300 hover:bg-red-950/60 transition-all flex items-center justify-center space-x-2 text-xs cursor-pointer"
               >
                 <Zap className="w-4 h-4 text-amber-400" />
-                <span>Simulate Malware Attack</span>
+                <span>{t('simRansomwareBtn')}</span>
               </button>
             </div>
 
@@ -302,15 +369,15 @@ export default function SimulationsPage() {
           />
 
           {/* Quick Verification Redirection Banner */}
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
-            <div className="text-slate-300">
-              Want to see the cryptographic alert in action?
+          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between gap-3">
+            <div className="text-slate-300 text-xs">
+              {t('simVerificationPrompt')}
             </div>
             <button
               onClick={() => navigate('/dashboard/verify')}
-              className="px-4 py-2 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 transition-colors flex items-center space-x-1"
+              className="px-4 py-2 rounded-lg bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-900/60 transition-colors flex items-center space-x-1 cursor-pointer shrink-0"
             >
-              <span>Run Verification Engine</span>
+              <span>{t('simRunVerifyBtn')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -322,11 +389,11 @@ export default function SimulationsPage() {
             activeLog?.isTampered ? 'border-red-500/60 shadow-crimson-glow' : 'border-slate-800'
           }`}>
             <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider pb-3 border-b border-slate-800 flex items-center justify-between">
-              <span>Target Record State</span>
+              <span>{t('simTargetStateTitle')}</span>
               {activeLog?.isTampered ? (
-                <span className="text-red-400 font-bold">🔴 COMPROMISED</span>
+                <span className="text-red-400 font-bold">{t('simTargetCompromised')}</span>
               ) : (
-                <span className="text-emerald-400 font-bold">🟢 UNTOUCHED</span>
+                <span className="text-emerald-400 font-bold">{t('simTargetUntouched')}</span>
               )}
             </h3>
 
@@ -337,19 +404,19 @@ export default function SimulationsPage() {
               </div>
 
               <div>
-                <div className="text-slate-500 text-[10px]">DEPARTMENT</div>
+                <div className="text-slate-500 text-[10px]">{t('verifyColDept')}</div>
                 <div className="text-slate-200">{activeLog?.department}</div>
               </div>
 
               <div>
-                <div className="text-slate-500 text-[10px]">CURRENT SHA-256 HASH</div>
+                <div className="text-slate-500 text-[10px]">{t('simTargetCurrentHash')}</div>
                 <div className="text-cyan-300 break-all text-[11px] mt-0.5">
                   {activeLog?.currentHash}
                 </div>
               </div>
 
               <div className="pt-2 border-t border-slate-800">
-                <div className="text-slate-500 text-[10px] mb-1">ACTIVE DATABASE PAYLOAD</div>
+                <div className="text-slate-500 text-[10px] mb-1">{t('simTargetPayload')}</div>
                 <pre className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 text-[10px] max-h-56 overflow-y-auto">
                   {JSON.stringify(activeLog?.payload, null, 2)}
                 </pre>
@@ -368,9 +435,9 @@ export default function SimulationsPage() {
               {activeLog?.isTampered && (
                 <button
                   onClick={() => restoreRecord(activeLog.id)}
-                  className="w-full mt-2 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 transition-colors"
+                  className="w-full mt-2 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 transition-colors cursor-pointer"
                 >
-                  Restore This Record Only
+                  {t('simRestoreSingleBtn')}
                 </button>
               )}
             </div>
@@ -384,7 +451,7 @@ export default function SimulationsPage() {
                 <FileWarning className="w-5 h-5 shrink-0" />
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-100">
-                    Official Malware Incident Certificate
+                    {t('simCertBannerTitle')}
                   </h4>
                   <div className="text-[10px] text-red-300 font-mono">
                     ID: {malwareIncident?.incidentId || 'INC-2026-MAL-DETECTED'}
@@ -393,7 +460,7 @@ export default function SimulationsPage() {
               </div>
 
               <p className="text-[11px] text-slate-300 leading-relaxed font-mono">
-                A formal security disclosure certificate has been automatically generated for this cryptographic integrity violation.
+                {t('simCertBannerDesc')}
               </p>
 
               <div className="p-3 rounded-xl bg-slate-950/80 border border-red-500/30 font-mono text-[10px] space-y-1.5">
@@ -402,7 +469,7 @@ export default function SimulationsPage() {
                   <span className="text-red-400 font-bold truncate max-w-[150px]">{malwareIncident?.threatSignature}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Hash Check:</span>
+                  <span className="text-slate-500">Seal Check:</span>
                   <span className="text-red-400 font-bold">MISMATCH / SEV-1</span>
                 </div>
                 <div className="flex justify-between">
@@ -414,17 +481,17 @@ export default function SimulationsPage() {
               <div className="space-y-2 pt-1">
                 <button
                   onClick={() => downloadMalwareCertificate(malwareIncident)}
-                  className="w-full py-2.5 px-4 rounded-xl font-bold bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white shadow-crimson-glow transition-all flex items-center justify-center space-x-2 text-xs"
+                  className="w-full py-2.5 px-4 rounded-xl font-bold bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white shadow-crimson-glow transition-all flex items-center justify-center space-x-2 text-xs cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Download Malware Incident Certificate</span>
+                  <span>{t('simDownloadCertBtn')}</span>
                 </button>
 
                 <button
                   onClick={openMalwareModal}
-                  className="w-full py-2 px-4 rounded-xl font-medium bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition-colors text-xs"
+                  className="w-full py-2 px-4 rounded-xl font-medium bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition-colors text-xs cursor-pointer"
                 >
-                  View Certificate Preview & Seal
+                  {t('simViewCertBtn')}
                 </button>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { INITIAL_LOGS } from '../data/mockLogs'
-import { fallbackSha256, calculateMerkleRoot } from '../utils/crypto'
+import { fallbackSha256, calculateMerkleRoot, sanitizeInput, calculateFileWebCryptoSha256 } from '../utils/crypto'
 import { generateMalwareCertificateData } from '../utils/certificateGenerator'
 
 const AuditContext = createContext(null)
@@ -96,33 +96,35 @@ export function AuditProvider({ children }) {
   const tamperRecord = (logId, modifiedFields, threatSignature = null) => {
     let affectedItem = null
 
-    setLogs(prevLogs => {
-      return prevLogs.map(item => {
-        if (item.id === logId) {
-          const updatedPayload = { ...item.payload, ...modifiedFields }
-          // Recompute altered hash to show modified data without consensus
-          const rawPayloadString = JSON.stringify(updatedPayload)
-          const blockContent = `${item.prevHash}|${item.blockHeight}|${item.timestamp}|${item.department}|${item.action}|${rawPayloadString}|${item.actor}`
-          const alteredHash = fallbackSha256(blockContent)
+    const updatedLogs = logs.map(item => {
+      if (item.id === logId) {
+        const updatedPayload = { ...item.payload, ...modifiedFields }
+        // Recompute altered hash to show modified data without consensus
+        const rawPayloadString = JSON.stringify(updatedPayload)
+        const blockContent = `${item.prevHash}|${item.blockHeight}|${item.timestamp}|${item.department}|${item.action}|${rawPayloadString}|${item.actor}`
+        const alteredHash = fallbackSha256(blockContent)
 
-          affectedItem = {
-            ...item,
-            payload: updatedPayload,
-            currentHash: alteredHash,
-            isTampered: true,
-            tamperedAt: new Date().toISOString(),
-            status: "Tampered (Divergent Hash)"
-          }
-          return affectedItem
+        affectedItem = {
+          ...item,
+          payload: updatedPayload,
+          currentHash: alteredHash,
+          isTampered: true,
+          tamperedAt: new Date().toISOString(),
+          status: "Tampered (Divergent Hash)"
         }
-        return item
-      })
+        return affectedItem
+      }
+      return item
     })
+
+    setLogs(updatedLogs)
 
     // Immediately trigger alert status
     setLastVerificationResult(prev => ({
       ...prev,
       status: 'TAMPERED',
+      isValid: false,
+      corruptedBlockIds: Array.from(new Set([...(prev.corruptedBlockIds || []), logId])),
       details: `Alert: Unauthorized modification flagged on Record ${logId}. Run Verification Engine to inspect divergence.`
     }))
 
@@ -149,25 +151,61 @@ export function AuditProvider({ children }) {
 
   // Restore single record
   const restoreRecord = (logId) => {
-    setLogs(prevLogs => {
-      return prevLogs.map(item => {
-        if (item.id === logId) {
-          return {
-            ...item,
-            payload: JSON.parse(JSON.stringify(item.originalPayload)),
-            currentHash: item.originalHash,
-            isTampered: false,
-            tamperedAt: null,
-            status: "Anchored"
-          }
+    const updated = logs.map(item => {
+      if (item.id === logId) {
+        return {
+          ...item,
+          payload: JSON.parse(JSON.stringify(item.originalPayload)),
+          currentHash: item.originalHash,
+          isTampered: false,
+          tamperedAt: null,
+          status: "Anchored"
         }
-        return item
+      }
+      return item
+    })
+
+    setLogs(updated)
+
+    const hasRemainingTampered = updated.some(l => l.isTampered)
+    if (!hasRemainingTampered) {
+      setMalwareIncident(null)
+      setLastVerificationResult({
+        status: 'VALID',
+        isValid: true,
+        timestamp: new Date().toISOString(),
+        corruptedBlockIds: [],
+        brokenChainIndices: [],
+        details: 'Record restored to original valid cryptographic state. Chain 100% verified.'
       })
+    }
+  }
+
+  // Restore entire chain to verified state (retains both pre-loaded records and newly imported files)
+  const resetAllRecords = () => {
+    const restored = logs.map(item => ({
+      ...item,
+      payload: JSON.parse(JSON.stringify(item.originalPayload)),
+      currentHash: item.originalHash,
+      isTampered: false,
+      tamperedAt: null,
+      status: "Anchored"
+    }))
+    setLogs(restored)
+    setOnChainMerkleRoot(calculateMerkleRoot(restored.map(l => l.originalHash)))
+    setMalwareIncident(null)
+    setLastVerificationResult({
+      status: 'VALID',
+      isValid: true,
+      timestamp: new Date().toISOString(),
+      corruptedBlockIds: [],
+      brokenChainIndices: [],
+      details: 'All records restored to original valid cryptographic state. Chain 100% verified.'
     })
   }
 
-  // Restore entire chain to genesis-verified state
-  const resetAllRecords = () => {
+  // Restore hard genesis state if explicitly requested
+  const resetToGenesis = () => {
     setLogs(INITIAL_LOGS)
     setMalwareIncident(null)
     const initialRoot = calculateMerkleRoot(INITIAL_LOGS.map(l => l.originalHash))
@@ -181,6 +219,107 @@ export function AuditProvider({ children }) {
       details: 'Blockchain restored to genesis state. All cryptographic blocks verified.'
     })
   }
+
+  // Additive File Import from Local Storage (PDF, CSV, JSON, DOCX, TXT, etc.)
+  const importFileRecord = useCallback(async (file) => {
+    if (!file) return null
+
+    // 1. Client-side input sanitization for XSS & unsafe path traversal
+    const rawName = file.name || 'unnamed_document'
+    const cleanName = sanitizeInput(rawName.replace(/[/\\?%*:|"<>]/g, '_')).sanitized || 'imported_document'
+
+    // 2. Compute cryptographic digital seal (SHA-256) of file payload
+    let fileHash = ''
+    try {
+      fileHash = await calculateFileWebCryptoSha256(file)
+    } catch {
+      fileHash = fallbackSha256(`${cleanName}|${file.size}|${Date.now()}`)
+    }
+
+    // 3. Format file size
+    const rawSize = file.size || 0
+    let formattedSize = `${rawSize} B`
+    if (rawSize >= 1024 * 1024) {
+      formattedSize = `${(rawSize / (1024 * 1024)).toFixed(2)} MB`
+    } else if (rawSize >= 1024) {
+      formattedSize = `${(rawSize / 1024).toFixed(1)} KB`
+    }
+
+    // 4. Document classification
+    const ext = cleanName.split('.').pop().toLowerCase()
+    let docType = 'Citizen Document Record'
+    if (ext === 'pdf') docType = 'Official PDF Attestation'
+    else if (ext === 'csv') docType = 'Tabular Treasury / Audit CSV'
+    else if (ext === 'json') docType = 'Structured JSON Data Record'
+    else if (['doc', 'docx'].includes(ext)) docType = 'Judicial / Municipal Deed DOCX'
+    else if (['log', 'txt'].includes(ext)) docType = 'System Audit Stream Log'
+
+    // 5. Optional text preview for text-readable formats
+    let textPreview = null
+    if (['json', 'txt', 'log', 'csv'].includes(ext) || file.type?.includes('text') || file.type?.includes('json')) {
+      try {
+        const textSample = await file.slice(0, 1024).text()
+        textPreview = sanitizeInput(textSample).sanitized
+      } catch {
+        // ignore preview extraction errors
+      }
+    }
+
+    const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
+
+    const lastBlock = logs[logs.length - 1]
+    const newHeight = lastBlock ? lastBlock.blockHeight + 1 : 1001
+    const prevHash = lastBlock ? lastBlock.currentHash : "0000000000000000000000000000000000000000000000000000000000000000"
+    const newId = `LOG-${newHeight}`
+    const department = "Document Registry"
+    const action = "FILE_STORAGE_IMPORT"
+    const actor = "OFFICER-FILE-IMPORT (Local Storage)"
+    const title = `${cleanName}`
+
+    const filePayload = {
+      fileName: cleanName,
+      fileSize: formattedSize,
+      rawBytes: rawSize,
+      mimeType: file.type || 'application/octet-stream',
+      fileChecksum: fileHash.startsWith('0x') ? fileHash : `0x${fileHash}`,
+      documentType: docType,
+      storageSource: 'Local System Storage Selection',
+      importedVia: 'GovChain Sentinel Direct File Import',
+      ingestTimestamp: timestamp,
+      contentPreview: textPreview || `${cleanName} (${formattedSize}, ${docType})`,
+      status: 'Verified Original Document'
+    }
+
+    const rawPayloadString = JSON.stringify(filePayload)
+    const blockContent = `${prevHash}|${newHeight}|${timestamp}|${department}|${action}|${rawPayloadString}|${actor}`
+    const currentHash = fallbackSha256(blockContent)
+
+    const generatedLog = {
+      id: newId,
+      blockHeight: newHeight,
+      timestamp,
+      department,
+      title,
+      actor,
+      action,
+      payload: filePayload,
+      onChainTx: `0x${fallbackSha256(newId + timestamp)}`,
+      prevHash,
+      currentHash,
+      isTampered: false,
+      originalPayload: JSON.parse(JSON.stringify(filePayload)),
+      originalHash: currentHash,
+      blockContent,
+      status: "Anchored",
+      isImported: true
+    }
+
+    const newChain = [...logs, generatedLog]
+    setLogs(newChain)
+    setOnChainMerkleRoot(calculateMerkleRoot(newChain.map(l => l.originalHash)))
+
+    return generatedLog
+  }, [logs])
 
   // Folder Import Handlers
   const addImportedFiles = (filesList, folderName = 'Local System Folder') => {
@@ -197,53 +336,55 @@ export function AuditProvider({ children }) {
   const batchIngestImportedFiles = () => {
     if (!importedFolderQueue.length) return 0
 
-    setLogs(prev => {
-      let currentChain = [...prev]
-      let lastBlock = currentChain[currentChain.length - 1]
+    let currentChain = [...logs]
+    let lastBlock = currentChain[currentChain.length - 1]
 
-      importedFolderQueue.forEach((file, idx) => {
-        const newHeight = lastBlock.blockHeight + 1 + idx
-        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
-        const newId = `LOG-${newHeight}`
-        const filePayload = {
-          fileName: file.name,
-          relativePath: file.path,
-          fileSize: file.size,
-          mimeType: file.type || 'application/octet-stream',
-          localChecksum: file.checksum,
-          importedVia: 'GovChain System Folder Ingestion Pipeline',
-          ingestTimestamp: timestamp
-        }
+    importedFolderQueue.forEach((file) => {
+      const cleanName = sanitizeInput((file.name || 'file').replace(/[/\\?%*:|"<>]/g, '_')).sanitized || 'imported_file'
+      const newHeight = lastBlock.blockHeight + 1
+      const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC'
+      const newId = `LOG-${newHeight}`
+      const filePayload = {
+        fileName: cleanName,
+        relativePath: sanitizeInput(file.path || cleanName).sanitized,
+        fileSize: file.size,
+        mimeType: file.type || 'application/octet-stream',
+        localChecksum: file.checksum,
+        importedVia: 'GovChain System Folder Ingestion Pipeline',
+        ingestTimestamp: timestamp
+      }
 
-        const rawPayloadString = JSON.stringify(filePayload)
-        const blockContent = `${lastBlock.currentHash}|${newHeight}|${timestamp}|Local Ingestion Mesh|SYSTEM_FOLDER_INGEST|${rawPayloadString}|SYSTEM-FOLDER-PIPELINE`
-        const currentHash = fallbackSha256(blockContent)
+      const actor = "OFFICER-LOCAL-PIPELINE"
+      const rawPayloadString = JSON.stringify(filePayload)
+      const blockContent = `${lastBlock.currentHash}|${newHeight}|${timestamp}|Local Ingestion Mesh|SYSTEM_FOLDER_INGEST|${rawPayloadString}|${actor}`
+      const currentHash = fallbackSha256(blockContent)
 
-        const newLog = {
-          id: newId,
-          blockHeight: newHeight,
-          timestamp,
-          department: "Local Ingestion Mesh",
-          title: `System Ingest: ${file.name}`,
-          actor: "OFFICER-LOCAL-PIPELINE",
-          action: "SYSTEM_FOLDER_INGEST",
-          payload: filePayload,
-          onChainTx: `0x${fallbackSha256(newId + timestamp)}`,
-          prevHash: lastBlock.currentHash,
-          currentHash,
-          isTampered: false,
-          originalPayload: JSON.parse(JSON.stringify(filePayload)),
-          originalHash: currentHash,
-          blockContent,
-          status: "Anchored"
-        }
+      const newLog = {
+        id: newId,
+        blockHeight: newHeight,
+        timestamp,
+        department: "Local Ingestion Mesh",
+        title: `System Ingest: ${cleanName}`,
+        actor,
+        action: "SYSTEM_FOLDER_INGEST",
+        payload: filePayload,
+        onChainTx: `0x${fallbackSha256(newId + timestamp)}`,
+        prevHash: lastBlock.currentHash,
+        currentHash,
+        isTampered: false,
+        originalPayload: JSON.parse(JSON.stringify(filePayload)),
+        originalHash: currentHash,
+        blockContent,
+        status: "Anchored",
+        isImported: true
+      }
 
-        currentChain.push(newLog)
-        lastBlock = newLog
-      })
-
-      return currentChain
+      currentChain.push(newLog)
+      lastBlock = newLog
     })
+
+    setLogs(currentChain)
+    setOnChainMerkleRoot(calculateMerkleRoot(currentChain.map(l => l.originalHash)))
 
     // Mark imported queue items as anchored
     setImportedFolderQueue(prev => prev.map(f => ({ ...f, status: 'ANCHORED_IN_CHAIN' })))
@@ -326,6 +467,8 @@ export function AuditProvider({ children }) {
         tamperRecord,
         restoreRecord,
         resetAllRecords,
+        resetToGenesis,
+        importFileRecord,
         commitNewMerkleAnchor,
         isStreaming,
         setIsStreaming,

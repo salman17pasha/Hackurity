@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAudit } from '../context/AuditContext'
+import { useLanguage } from '../context/LanguageContext'
 import { downloadMalwareCertificate } from '../utils/certificateGenerator'
 
 export default function VerificationPage() {
@@ -27,6 +28,7 @@ export default function VerificationPage() {
     malwareIncident,
     openMalwareModal
   } = useAudit()
+  const { t } = useLanguage()
 
   const [isAuditing, setIsAuditing] = useState(false)
   const [terminalLogs, setTerminalLogs] = useState([])
@@ -37,13 +39,13 @@ export default function VerificationPage() {
     setTerminalLogs([])
 
     const steps = [
-      "Initializing GovChain Sentinel Cryptographic Audit Protocol v2.4...",
-      `Scanning ${logs.length} sequential blocks from Genesis [Block #1001] to tip...`,
-      "Recomputing individual SHA-256 digests from raw block payloads...",
-      "Validating forward predecessor links (prevHash === predecessor.currentHash)...",
-      "Constructing pairwise Merkle Tree binary hierarchy...",
-      `Querying decentralized smart contract Merkle root: ${onChainMerkleRoot.substring(0, 20)}...`,
-      "Comparing computed Merkle root with on-chain consensus state..."
+      "Initializing GovChain Sentinel Verification Protocol v2.4...",
+      `Scanning ${logs.length} sequential records from Genesis [Block #1001] to tip...`,
+      "Recomputing individual digital seals from raw record data...",
+      "Validating forward seal links (prevHash === predecessor.currentHash)...",
+      "Constructing pairwise verification seal tree hierarchy...",
+      `Querying decentralized public master seal: ${onChainMerkleRoot.substring(0, 20)}...`,
+      "Comparing computed master seal with public decentralized ledger state..."
     ]
 
     steps.forEach((step, idx) => {
@@ -58,8 +60,8 @@ export default function VerificationPage() {
       setTerminalLogs(prev => [
         ...prev,
         result.isValid 
-          ? `[SUCCESS] All ${logs.length} blocks mathematically valid. Merkle roots identical.`
-          : `[CRITICAL ALERT] Integrity violation detected in ${result.corruptedBlockIds.length} block(s)!`
+          ? `[SUCCESS] All ${logs.length} records verified unaltered. Digital seals identical to public anchor.`
+          : `[CRITICAL ALERT] Integrity violation detected in ${result.corruptedBlockIds.length} record(s)! Master seal divergent.`
       ])
     }, (steps.length + 1) * 350)
   }
@@ -73,28 +75,28 @@ export default function VerificationPage() {
       <div className="pb-6 mb-6 border-b border-slate-800">
         <button
           onClick={() => navigate('/dashboard')}
-          className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2"
+          className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Return to Dashboard Overview</span>
+          <span>{t('verifyReturnDash')}</span>
         </button>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-slate-100">
-              Integrity Verification Engine
+              {t('verifyHeaderTitle')}
             </h1>
             <p className="text-xs font-mono text-slate-400 mt-1">
-              Cross-reference state databases against on-chain Ethereum/L2 Merkle commitments.
+              {t('verifyHeaderDesc')}
             </p>
           </div>
 
           <button
             onClick={handleRunVerification}
             disabled={isAuditing}
-            className="px-6 py-3 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all flex items-center space-x-2 disabled:opacity-70"
+            className="px-6 py-3 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all flex items-center space-x-2 disabled:opacity-70 cursor-pointer"
           >
             <RefreshCw className={`w-4 h-4 ${isAuditing ? 'animate-spin' : ''}`} />
-            <span>{isAuditing ? 'Auditing Hash Chain...' : 'Verify Full Integrity Now'}</span>
+            <span>{isAuditing ? t('verifyBtnRunning') : t('verifyBtnRun')}</span>
           </button>
         </div>
       </div>
@@ -121,7 +123,7 @@ export default function VerificationPage() {
                     ? 'bg-red-900/50 border-red-500 text-red-300' 
                     : 'bg-emerald-900/50 border-emerald-500 text-emerald-300'
                 }`}>
-                  {isTampered ? '🔴 CRITICAL TAMPER DETECTED' : '🟢 INTEGRITY 100% VERIFIED'}
+                  {isTampered ? `🔴 ${t('dashTamperDetected')}` : `🟢 ${t('dash100Verified')}`}
                 </span>
                 <span className="text-xs font-mono text-slate-400">
                   Last Checked: {new Date(lastVerificationResult.timestamp).toLocaleTimeString()}
@@ -129,8 +131,8 @@ export default function VerificationPage() {
               </div>
               <h2 className="text-xl sm:text-2xl font-extrabold text-slate-100 mt-2">
                 {isTampered 
-                  ? 'Unauthorized Ledger Modification Discovered' 
-                  : 'All State Logs Match Cryptographic Root Commitment'}
+                  ? t('verifyBannerTamperedTitle') 
+                  : t('verifyBannerValidTitle')}
               </h2>
               <p className="text-xs font-mono text-slate-300 mt-1 max-w-2xl">
                 {lastVerificationResult.details}
@@ -144,35 +146,35 @@ export default function VerificationPage() {
                 setReportGenerated(true)
                 setTimeout(() => setReportGenerated(false), 2500)
               }}
-              className="px-4 py-2.5 rounded-xl font-mono text-xs bg-slate-900/90 border border-slate-700 text-slate-200 hover:text-cyan-300 hover:border-cyan-500/40 transition-colors flex items-center justify-center space-x-2"
+              className="px-4 py-2.5 rounded-xl font-mono text-xs bg-slate-900/90 border border-slate-700 text-slate-200 hover:text-cyan-300 hover:border-cyan-500/40 transition-colors flex items-center justify-center space-x-2 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>{reportGenerated ? 'Report Downloaded!' : 'Export Forensic Certificate'}</span>
+              <span>{reportGenerated ? t('verifyCertDownloaded') : t('verifyExportCert')}</span>
             </button>
           </div>
         </div>
 
-        {/* Merkle Comparison Strip */}
+        {/* Master Seal Comparison Strip */}
         <div className="mt-6 pt-6 border-t border-slate-800/80 grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
           <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
-            <div className="text-slate-500 text-[10px] uppercase">Anchored On-Chain Merkle Root</div>
+            <div className="text-slate-500 text-[10px] uppercase">{t('verifyOnChainRoot')}</div>
             <div className="text-emerald-400 font-bold break-all mt-1">
               {onChainMerkleRoot}
             </div>
             <div className="text-[10px] text-slate-400 mt-1">
-              Smart Contract Source: Ethereum L2 Contract #0x9e7a...
+              {t('verifyOnChainDesc')}
             </div>
           </div>
 
           <div className="bg-slate-950/70 p-3.5 rounded-xl border border-slate-800">
-            <div className="text-slate-500 text-[10px] uppercase">Locally Recomputed Merkle Root</div>
+            <div className="text-slate-500 text-[10px] uppercase">{t('verifyComputedRoot')}</div>
             <div className={`font-bold break-all mt-1 ${
               isTampered ? 'text-red-400' : 'text-emerald-400'
             }`}>
               {lastVerificationResult.computedMerkleRoot || onChainMerkleRoot}
             </div>
             <div className="text-[10px] text-slate-400 mt-1">
-              Derived from current database state
+              {t('verifyComputedDesc')}
             </div>
           </div>
         </div>
@@ -183,7 +185,7 @@ export default function VerificationPage() {
         <div className="mb-8 p-5 rounded-2xl bg-slate-950 border border-slate-800 shadow-xl font-mono text-xs">
           <div className="flex items-center space-x-2 text-slate-400 pb-3 mb-3 border-b border-slate-800">
             <Terminal className="w-4 h-4 text-cyan-400" />
-            <span className="font-bold text-slate-200">Forensic Execution Telemetry</span>
+            <span className="font-bold text-slate-200">{t('verifyTelemetryTitle')}</span>
           </div>
           <div className="space-y-1.5 max-h-48 overflow-y-auto">
             {terminalLogs.map((logLine, idx) => (
@@ -201,19 +203,19 @@ export default function VerificationPage() {
       {/* Block-by-Block Verification Audit Table */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm font-mono text-xs">
         <h3 className="text-sm font-bold text-slate-200 mb-4 flex items-center justify-between">
-          <span>Block-by-Block Cryptographic Verification Audit</span>
-          <span className="text-slate-400 text-xs">{logs.length} Total Verified</span>
+          <span>{t('verifyTableTitle')}</span>
+          <span className="text-slate-400 text-xs">{logs.length} {t('verifyTableTotal')}</span>
         </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-800 text-slate-500 text-[11px]">
-                <th className="py-2.5 px-3">BLOCK</th>
-                <th className="py-2.5 px-3">DEPARTMENT</th>
-                <th className="py-2.5 px-3">RECORD TITLE</th>
-                <th className="py-2.5 px-3">PREDECESSOR LINK</th>
-                <th className="py-2.5 px-3">STATUS</th>
+                <th className="py-2.5 px-3">{t('verifyColBlock')}</th>
+                <th className="py-2.5 px-3">{t('verifyColDept')}</th>
+                <th className="py-2.5 px-3">{t('verifyColTitle')}</th>
+                <th className="py-2.5 px-3">{t('verifyColLink')}</th>
+                <th className="py-2.5 px-3">{t('verifyColStatus')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -241,23 +243,23 @@ export default function VerificationPage() {
                       {isPredecessorBroken ? (
                         <span className="text-red-400 flex items-center space-x-1">
                           <AlertTriangle className="w-3.5 h-3.5" />
-                          <span>Broken Link</span>
+                          <span>{t('verifyLinkBroken')}</span>
                         </span>
                       ) : (
                         <span className="text-emerald-400 flex items-center space-x-1">
                           <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Continuity OK</span>
+                          <span>{t('verifyLinkOk')}</span>
                         </span>
                       )}
                     </td>
                     <td className="py-3 px-3">
                       {isBlockTampered ? (
                         <span className="px-2 py-0.5 rounded bg-red-950/80 border border-red-500/60 text-red-300 text-[10px] font-bold">
-                          🔴 TAMPERED
+                          {t('verifyStatusTampered')}
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold">
-                          🟢 VALID
+                          {t('verifyStatusValid')}
                         </span>
                       )}
                     </td>

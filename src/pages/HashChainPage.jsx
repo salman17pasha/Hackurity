@@ -15,10 +15,12 @@ import {
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAudit } from '../context/AuditContext'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function HashChainPage() {
   const { navigate } = useRouter()
   const { logs, lastVerificationResult } = useAudit()
+  const { t } = useLanguage()
   const [selectedBlockIndex, setSelectedBlockIndex] = useState(0)
   const [copiedText, setCopiedText] = useState(null)
 
@@ -37,24 +39,24 @@ export default function HashChainPage() {
       <div className="pb-6 mb-6 border-b border-slate-800">
         <button
           onClick={() => navigate('/dashboard')}
-          className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2"
+          className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Return to Dashboard Overview</span>
+          <span>{t('chainReturnDash')}</span>
         </button>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-slate-100">
-              Cryptographic Hash-Chain Inspector
+              {t('chainHeaderTitle')}
             </h1>
             <p className="text-xs font-mono text-slate-400 mt-1">
-              Verify continuous SHA-256 forward dependencies linking genesis block to active head.
+              {t('chainHeaderDesc')}
             </p>
           </div>
 
           <div className="flex items-center space-x-2 text-xs font-mono">
             <span className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300">
-              Chain Length: <strong className="text-cyan-400">{logs.length} Blocks</strong>
+              {t('chainLengthLabel')} <strong className="text-cyan-400">{logs.length} {t('cardLogsBadge')}</strong>
             </span>
           </div>
         </div>
@@ -65,9 +67,9 @@ export default function HashChainPage() {
         <div className="text-xs font-mono text-slate-400 mb-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <GitCommit className="w-4 h-4 text-cyan-400" />
-            <span className="font-bold text-slate-200">Interactive Sequential Block Chain</span>
+            <span className="font-bold text-slate-200">{t('chainInteractiveTitle')}</span>
           </div>
-          <span className="text-slate-500 text-[11px]">Click a block node to inspect forensic breakdown</span>
+          <span className="text-slate-500 text-[11px]">{t('chainInteractiveSubtitle')}</span>
         </div>
 
         {/* Chain Flow Nodes */}
@@ -146,7 +148,7 @@ export default function HashChainPage() {
                   </div>
                   <div>
                     <h2 className="text-base font-bold text-slate-100">
-                      Block #{selectedBlock.blockHeight} Cryptographic Proof
+                      {t('chainProofTitle', { block: selectedBlock.blockHeight })}
                     </h2>
                     <p className="text-xs text-slate-400">
                       Record ID: {selectedBlock.id} // {selectedBlock.department}
@@ -159,17 +161,17 @@ export default function HashChainPage() {
                     ? 'bg-red-950/70 border-red-500/60 text-red-300' 
                     : 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
                 }`}>
-                  {selectedBlock.isTampered ? 'HASH DIVERGENCE' : 'CRYPTOGRAPHICALLY SEALED'}
+                  {selectedBlock.isTampered ? t('chainDivergenceBadge') : t('chainSealedBadge')}
                 </span>
               </div>
 
-              {/* Formula Explainer */}
+              {/* Plain-Language Formula Explainer */}
               <div className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 mb-6 text-slate-300 space-y-2">
                 <div className="text-[11px] font-bold text-cyan-400 uppercase">
-                  SHA-256 Hashing Formula:
+                  {t('chainFormulaTitle')}
                 </div>
-                <div className="text-[11px] text-slate-400 bg-slate-900 p-2 rounded border border-slate-800 overflow-x-auto">
-                  <code>SHA256( prevHash + blockHeight + timestamp + department + action + payloadJSON + actor )</code>
+                <div className="text-[11px] text-slate-300 bg-slate-900 p-2.5 rounded border border-slate-800 font-sans">
+                  {t('chainFormulaNote')}
                 </div>
               </div>
 
@@ -177,13 +179,13 @@ export default function HashChainPage() {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center justify-between text-slate-400 text-[11px] mb-1">
-                    <span>1. PREDECESSOR HASH (prevHash):</span>
+                    <span>{t('chainPrevHashLabel')}</span>
                     <button
                       onClick={() => copyToClipboard(selectedBlock.prevHash)}
-                      className="text-cyan-400 hover:underline flex items-center space-x-1"
+                      className="text-cyan-400 hover:underline flex items-center space-x-1 cursor-pointer"
                     >
                       <Copy className="w-3 h-3" />
-                      <span>{copiedText === selectedBlock.prevHash ? 'Copied' : 'Copy'}</span>
+                      <span>{copiedText === selectedBlock.prevHash ? t('logsCopied') : t('logsCopyTooltip')}</span>
                     </button>
                   </div>
                   <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 break-all">
@@ -193,13 +195,13 @@ export default function HashChainPage() {
 
                 <div>
                   <div className="flex items-center justify-between text-slate-400 text-[11px] mb-1">
-                    <span>2. CURRENT BLOCK SHA-256 HASH (currentHash):</span>
+                    <span>{t('chainCurrHashLabel')}</span>
                     <button
                       onClick={() => copyToClipboard(selectedBlock.currentHash)}
-                      className="text-cyan-400 hover:underline flex items-center space-x-1"
+                      className="text-cyan-400 hover:underline flex items-center space-x-1 cursor-pointer"
                     >
                       <Copy className="w-3 h-3" />
-                      <span>{copiedText === selectedBlock.currentHash ? 'Copied' : 'Copy'}</span>
+                      <span>{copiedText === selectedBlock.currentHash ? t('logsCopied') : t('logsCopyTooltip')}</span>
                     </button>
                   </div>
                   <div className={`p-3 rounded-lg border break-all font-bold ${
@@ -215,10 +217,10 @@ export default function HashChainPage() {
                   <div className="p-3.5 rounded-xl bg-red-950/40 border border-red-500/50 text-red-300 space-y-1">
                     <div className="font-bold flex items-center space-x-1.5">
                       <AlertTriangle className="w-4 h-4 text-red-400" />
-                      <span>Tamper Anomaly Detected</span>
+                      <span>{t('chainAnomalyTitle')}</span>
                     </div>
                     <p className="text-[11px] text-red-300/80">
-                      The payload data for this block was modified. Its computed SHA-256 hash now diverges from the original anchored root commitment!
+                      {t('chainAnomalyDesc')}
                     </p>
                   </div>
                 )}
@@ -231,33 +233,33 @@ export default function HashChainPage() {
           <div className="space-y-6">
             <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-sm space-y-4">
               <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider pb-3 border-b border-slate-800">
-                Block Metadata
+                {t('chainMetadataTitle')}
               </h3>
 
               <div className="space-y-2.5">
                 <div>
-                  <div className="text-slate-500 text-[10px]">TIMESTAMP</div>
+                  <div className="text-slate-500 text-[10px]">{t('chainTime')}</div>
                   <div className="text-slate-200 mt-0.5">{selectedBlock.timestamp}</div>
                 </div>
 
                 <div>
-                  <div className="text-slate-500 text-[10px]">AUTHORIZED ACTOR</div>
+                  <div className="text-slate-500 text-[10px]">{t('chainActor')}</div>
                   <div className="text-slate-200 mt-0.5">{selectedBlock.actor}</div>
                 </div>
 
                 <div>
-                  <div className="text-slate-500 text-[10px]">ACTION TYPE</div>
+                  <div className="text-slate-500 text-[10px]">{t('chainAction')}</div>
                   <div className="text-cyan-300 mt-0.5">{selectedBlock.action}</div>
                 </div>
 
                 <div>
-                  <div className="text-slate-500 text-[10px]">ON-CHAIN PROOF TX</div>
+                  <div className="text-slate-500 text-[10px]">{t('chainProofTx')}</div>
                   <div className="text-slate-300 break-all text-[10px] mt-0.5">{selectedBlock.onChainTx}</div>
                 </div>
               </div>
 
               <div className="pt-4 border-t border-slate-800">
-                <div className="text-slate-500 text-[10px] mb-2 uppercase">Record Payload</div>
+                <div className="text-slate-500 text-[10px] mb-2 uppercase">{t('chainRecordPayload')}</div>
                 <pre className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-[11px] text-slate-300 overflow-x-auto max-h-56">
                   {JSON.stringify(selectedBlock.payload, null, 2)}
                 </pre>

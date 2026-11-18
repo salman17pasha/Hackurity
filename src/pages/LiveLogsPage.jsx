@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { 
   FileText, 
   Search, 
@@ -8,16 +8,20 @@ import {
   ChevronDown, 
   ChevronUp, 
   Copy, 
-  Radio,
-  FolderUp,
-  HardDrive
+  Radio, 
+  FolderUp, 
+  HardDrive,
+  Upload
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAudit } from '../context/AuditContext'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function LiveLogsPage() {
   const { navigate } = useRouter()
-  const { logs, isStreaming, setIsStreaming, openFolderModal, importedFolderQueue, importedFolderName } = useAudit()
+  const { logs, isStreaming, setIsStreaming, openFolderModal, importedFolderQueue, importedFolderName, importFileRecord } = useAudit()
+  const { t } = useLanguage()
+  const fileInputRef = useRef(null)
 
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedDept, setSelectedDept] = useState('All')
@@ -25,7 +29,23 @@ export default function LiveLogsPage() {
   const [expandedLogId, setExpandedLogId] = useState(null)
   const [copiedNotification, setCopiedNotification] = useState(null)
 
-  const departments = ['All', 'Judiciary', 'Land Registry', 'State Treasury', 'Civil Registry', 'Customs & Ports', 'Urban Infrastructure']
+  const departments = useMemo(() => {
+    const baseDepts = ['All', 'Judiciary', 'Land Registry', 'State Treasury', 'Civil Registry', 'Customs & Ports', 'Urban Infrastructure', 'Document Registry']
+    const dynamicDepts = logs.map(l => l.department).filter(Boolean)
+    return Array.from(new Set([...baseDepts, ...dynamicDepts]))
+  }, [logs])
+
+  const handleDirectFileImport = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      await importFileRecord(file)
+    } catch (err) {
+      console.error('File import error:', err)
+    } finally {
+      if (e.target) e.target.value = ''
+    }
+  }
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
@@ -61,44 +81,60 @@ export default function LiveLogsPage() {
         <div>
           <button
             onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2"
+            className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Return to Dashboard Overview</span>
+            <span>{t('logsReturnDash')}</span>
           </button>
           <div className="flex items-center space-x-3">
             <h1 className="text-2xl font-extrabold text-slate-100">
-              Live Government Audit Logs
+              {t('logsHeaderTitle')}
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-cyan-950/70 border border-cyan-500/40 text-cyan-300">
-              {filteredLogs.length} Records
+              {filteredLogs.length} {t('logsRecordsCount')}
             </span>
           </div>
           <p className="text-xs font-mono text-slate-400 mt-1">
-            Real-time streaming ledger of sovereign state actions, FIR amendments, and land mutations.
+            {t('logsHeaderDesc')}
           </p>
         </div>
 
-        {/* Actions: Import Folder & Live Stream Toggle */}
+        {/* Actions: Import File, Import Folder & Live Stream Toggle */}
         <div className="flex flex-wrap items-center gap-3">
           <button
+            onClick={() => fileInputRef.current?.click()}
+            className="px-4 py-2 rounded-xl text-xs font-mono bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 transition-all flex items-center space-x-2 cursor-pointer shadow-sm"
+            title={t('simImportFileHint')}
+          >
+            <Upload className="w-3.5 h-3.5 text-emerald-400" />
+            <span>{t('simImportFileBtn')}</span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            onChange={handleDirectFileImport}
+            className="hidden"
+            accept=".pdf,.csv,.json,.docx,.doc,.txt,.log,.xlsx"
+          />
+
+          <button
             onClick={openFolderModal}
-            className="px-4 py-2 rounded-xl text-xs font-mono bg-cyan-950/70 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 shadow-cyan-glow transition-all flex items-center space-x-2"
+            className="px-4 py-2 rounded-xl text-xs font-mono bg-cyan-950/70 hover:bg-cyan-900/80 text-cyan-300 border border-cyan-500/40 shadow-cyan-glow transition-all flex items-center space-x-2 cursor-pointer"
           >
             <FolderUp className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Import System Folder</span>
+            <span>{t('dashImportFolder')}</span>
           </button>
 
           <button
             onClick={() => setIsStreaming(!isStreaming)}
-            className={`px-4 py-2 rounded-xl text-xs font-mono border transition-all flex items-center space-x-2 ${
+            className={`px-4 py-2 rounded-xl text-xs font-mono border transition-all flex items-center space-x-2 cursor-pointer ${
               isStreaming
                 ? 'bg-cyan-950/80 border-cyan-500/60 text-cyan-300 shadow-cyan-glow'
                 : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800'
             }`}
           >
             <Radio className={`w-3.5 h-3.5 ${isStreaming ? 'animate-pulse text-cyan-400' : ''}`} />
-            <span>{isStreaming ? 'Live Polling: ACTIVE' : 'Resume Live Ingestion'}</span>
+            <span>{isStreaming ? t('dashLiveStreamOn') : t('dashLiveStreamPaused')}</span>
           </button>
         </div>
       </div>
@@ -109,17 +145,17 @@ export default function LiveLogsPage() {
           <div className="flex items-center space-x-3">
             <HardDrive className="w-4 h-4 text-cyan-400 shrink-0" />
             <div>
-              <span className="text-slate-400">Local System Ingestion Queue: </span>
+              <span className="text-slate-400">{t('folderQueueTitle')} </span>
               <strong className="text-cyan-300 font-bold">{importedFolderName}</strong>
-              <span className="text-slate-500 ml-2">({importedFolderQueue.length} files queued / loaded)</span>
+              <span className="text-slate-500 ml-2">({importedFolderQueue.length} {t('folderQueueFiles')})</span>
             </div>
           </div>
 
           <button
             onClick={openFolderModal}
-            className="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 text-[11px] transition-colors"
+            className="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 text-[11px] transition-colors cursor-pointer"
           >
-            Open Queue & Batch Ingest &rarr;
+            {t('folderReviewQueue')}
           </button>
         </div>
       )}
@@ -137,7 +173,7 @@ export default function LiveLogsPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by FIR ID, parcel ID, actor, or hash..."
+              placeholder={t('logsSearchPlaceholder')}
               className="w-full pl-10 pr-4 py-2 bg-slate-950/80 border border-slate-800 focus:border-cyan-500/80 text-slate-100 rounded-xl text-xs font-mono outline-none"
             />
           </div>
@@ -151,7 +187,7 @@ export default function LiveLogsPage() {
             >
               {departments.map((dept) => (
                 <option key={dept} value={dept}>
-                  Department: {dept}
+                  {dept === 'All' ? t('logsFilterDeptAll') : dept}
                 </option>
               ))}
             </select>
@@ -164,9 +200,9 @@ export default function LiveLogsPage() {
               onChange={(e) => setSelectedStatus(e.target.value)}
               className="w-full px-3 py-2 bg-slate-950/80 border border-slate-800 focus:border-cyan-500/80 text-slate-100 rounded-xl text-xs font-mono outline-none cursor-pointer"
             >
-              <option value="All">All States (Anchored & Tampered)</option>
-              <option value="Anchored">Only Anchored (Verified)</option>
-              <option value="Tampered">Only Tampered (Alerts)</option>
+              <option value="All">{t('logsFilterStatusAll')}</option>
+              <option value="Anchored">{t('logsFilterStatusAnchored')}</option>
+              <option value="Tampered">{t('logsFilterStatusTampered')}</option>
             </select>
           </div>
 
@@ -178,8 +214,8 @@ export default function LiveLogsPage() {
         {filteredLogs.length === 0 ? (
           <div className="p-12 text-center bg-slate-900/60 border border-slate-800 rounded-2xl">
             <FileText className="w-8 h-8 text-slate-600 mx-auto mb-3" />
-            <div className="text-sm font-semibold text-slate-400">No matching log records found</div>
-            <div className="text-xs text-slate-600 mt-1">Try relaxing your search query or department filter.</div>
+            <div className="text-sm font-semibold text-slate-400">{t('logsNoRecords')}</div>
+            <div className="text-xs text-slate-600 mt-1">{t('logsNoRecordsDesc')}</div>
           </div>
         ) : (
           filteredLogs.map((log) => {
@@ -226,18 +262,18 @@ export default function LiveLogsPage() {
                       {log.isTampered ? (
                         <span className="px-2.5 py-1 rounded-md text-xs bg-red-950/70 border border-red-500/60 text-red-300 flex items-center space-x-1.5 animate-pulse">
                           <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-                          <span>TAMPERED</span>
+                          <span>{t('logsBadgeTampered')}</span>
                         </span>
                       ) : (
                         <span className="px-2.5 py-1 rounded-md text-xs bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 flex items-center space-x-1.5">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>ANCHORED</span>
+                          <span>{t('logsBadgeAnchored')}</span>
                         </span>
                       )}
                     </div>
 
                     {/* Expand/Collapse Chevron */}
-                    <button className="text-slate-400 hover:text-slate-200">
+                    <button className="text-slate-400 hover:text-slate-200 cursor-pointer">
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
                   </div>
@@ -247,16 +283,16 @@ export default function LiveLogsPage() {
                 {isExpanded && (
                   <div className="px-4 pb-4 pt-2 border-t border-slate-800/80 bg-slate-950/70 text-xs space-y-4">
                     
-                    {/* Cryptographic Linkage Strip */}
+                    {/* Plain Language Digital Seal Linkage Strip */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                       <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
-                        <div className="text-slate-500 text-[10px] uppercase">Previous Block SHA-256</div>
+                        <div className="text-slate-500 text-[10px] uppercase">{t('logsPrevHash')}</div>
                         <div className="flex items-center justify-between mt-1 text-slate-300 text-[11px] truncate">
                           <code>{log.prevHash}</code>
                           <button
                             onClick={() => copyToClipboard(log.prevHash)}
-                            title="Copy Hash"
-                            className="ml-2 text-slate-500 hover:text-cyan-400 shrink-0"
+                            title={t('logsCopyTooltip')}
+                            className="ml-2 text-slate-500 hover:text-cyan-400 shrink-0 cursor-pointer"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
@@ -264,13 +300,13 @@ export default function LiveLogsPage() {
                       </div>
 
                       <div className="bg-slate-900/90 p-3 rounded-lg border border-slate-800">
-                        <div className="text-slate-500 text-[10px] uppercase">Current Block SHA-256</div>
+                        <div className="text-slate-500 text-[10px] uppercase">{t('logsCurrHash')}</div>
                         <div className="flex items-center justify-between mt-1 text-cyan-300 text-[11px] truncate">
                           <code>{log.currentHash}</code>
                           <button
                             onClick={() => copyToClipboard(log.currentHash)}
-                            title="Copy Hash"
-                            className="ml-2 text-slate-500 hover:text-cyan-400 shrink-0"
+                            title={t('logsCopyTooltip')}
+                            className="ml-2 text-slate-500 hover:text-cyan-400 shrink-0 cursor-pointer"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
@@ -279,21 +315,21 @@ export default function LiveLogsPage() {
                     </div>
 
                     {/* On-Chain Transaction Commitment */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-900/60 p-2.5 rounded-lg border border-slate-800 text-[11px]">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-900/60 p-2.5 rounded-lg border border-slate-800 text-[11px] gap-2">
                       <div className="text-slate-400">
-                        Decentralized Root Tx: <code className="text-slate-300">{log.onChainTx}</code>
+                        {t('logsOnChainTx')} <code className="text-slate-300">{log.onChainTx}</code>
                       </div>
-                      <span className="text-emerald-400 text-[10px] uppercase font-bold mt-1 sm:mt-0">
-                        Merkle Finalized
+                      <span className="text-emerald-400 text-[10px] uppercase font-bold">
+                        {t('logsFinalizedBadge')}
                       </span>
                     </div>
 
                     {/* Formatted JSON Payload */}
                     <div>
                       <div className="text-[11px] font-bold text-slate-400 mb-1.5 flex items-center justify-between">
-                        <span>EVENT PAYLOAD BODY:</span>
+                        <span>{t('logsPayloadBody')}</span>
                         {log.isTampered && (
-                          <span className="text-red-400">⚠️ Discrepancy with original root anchor detected</span>
+                          <span className="text-red-400 font-bold">{t('logsDiscrepancyAlert')}</span>
                         )}
                       </div>
                       <pre className="p-3 bg-slate-950 rounded-lg border border-slate-800 text-slate-300 text-[11px] overflow-x-auto">

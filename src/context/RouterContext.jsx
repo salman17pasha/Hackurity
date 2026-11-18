@@ -27,15 +27,31 @@ export function RouterProvider({ children }) {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
 
+  // Smooth scroll to top on every route / tab change (Task 3)
+  useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch {
+      window.scrollTo(0, 0)
+    }
+  }, [currentPath])
+
   const navigate = (path) => {
-    if (path === currentPath) return
+    if (path === currentPath) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
     setCurrentPath(path)
     try {
       window.history.pushState(null, '', path)
     } catch {
       window.location.hash = path
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    try {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch {
+      window.scrollTo(0, 0)
+    }
   }
 
   return (

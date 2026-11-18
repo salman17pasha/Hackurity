@@ -9,9 +9,11 @@ import {
   Compass
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function NotFoundPage() {
   const { currentPath, navigate } = useRouter()
+  const { t } = useLanguage()
 
   return (
     <div className="min-h-screen cyber-grid py-16 px-4 sm:px-6 lg:px-8 flex items-center justify-center relative">
@@ -38,15 +40,15 @@ export default function NotFoundPage() {
           </span>
         </h1>
         <h2 className="text-2xl sm:text-3xl font-bold text-slate-100 mt-2 font-mono tracking-tight">
-          404 - Page Not Found
+          {t('notFoundTitle')}
         </h2>
 
         {/* Description */}
         <p className="mt-4 text-sm sm:text-base text-slate-400 max-w-lg mx-auto font-normal leading-relaxed">
-          The requested cryptographic route <code className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-cyan-300 font-mono text-xs break-all">{currentPath || '/unknown'}</code> does not exist on the Sentinel audit mesh, has been moved, or was purged from the routing ledger.
+          {t('notFoundDesc')}
         </p>
 
-        {/* Simulated SOC Security Terminal Output */}
+        {/* Simulated Security Terminal Output */}
         <div className="mt-6 p-4 rounded-xl bg-slate-950/90 border border-slate-800/90 text-left font-mono text-xs max-w-xl mx-auto shadow-2xl backdrop-blur-md">
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-slate-500 text-[11px]">
             <div className="flex items-center space-x-2">
@@ -57,8 +59,8 @@ export default function NotFoundPage() {
           </div>
           <div className="space-y-1 text-slate-400 text-[11px]">
             <div><span className="text-cyan-400">&gt;</span> Resolution Path: <span className="text-slate-200">{currentPath || '*'}</span></div>
-            <div><span className="text-cyan-400">&gt;</span> Cryptographic Anchor: <span className="text-red-400">UNMATCHED_BLOCK_DIGEST</span></div>
-            <div><span className="text-cyan-400">&gt;</span> Consensus Verification: <span className="text-amber-400">No active state contract bound to this route</span></div>
+            <div><span className="text-cyan-400">&gt;</span> Digital Seal: <span className="text-red-400">UNMATCHED_BLOCK_DIGEST</span></div>
+            <div><span className="text-cyan-400">&gt;</span> Public Verification: <span className="text-amber-400">No active state contract bound to this route</span></div>
             <div><span className="text-cyan-400">&gt;</span> Directive: <span className="text-emerald-400">Fail-safe fallback recommended &rarr; Return to Landing Page</span></div>
           </div>
         </div>
@@ -67,18 +69,18 @@ export default function NotFoundPage() {
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <button
             onClick={() => navigate('/')}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all transform hover:-translate-y-0.5 flex items-center justify-center space-x-2 cursor-pointer"
           >
             <Home className="w-4 h-4 text-slate-950" />
-            <span>Return to Landing Page</span>
+            <span>{t('notFoundReturnHome')}</span>
           </button>
 
           <button
             onClick={() => navigate('/login')}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-mono text-xs font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition-all flex items-center justify-center space-x-2"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-xl font-mono text-xs font-semibold bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
             <Lock className="w-4 h-4 text-cyan-400" />
-            <span>Access Portal Login</span>
+            <span>{t('notFoundLogin')}</span>
           </button>
         </div>
 

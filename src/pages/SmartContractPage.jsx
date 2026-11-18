@@ -19,12 +19,14 @@ import {
 import { useRouter } from '../context/RouterContext'
 import { useAuth } from '../context/AuthContext'
 import { useAudit } from '../context/AuditContext'
+import { useLanguage } from '../context/LanguageContext'
 import { calculateMerkleRoot, fallbackSha256 } from '../utils/crypto'
 
 export default function SmartContractPage() {
   const { navigate } = useRouter()
   const { user, isAdmin } = useAuth()
   const { logs, onChainMerkleRoot, commitNewMerkleAnchor, resetAllRecords } = useAudit()
+  const { t } = useLanguage()
 
   const [copiedKey, setCopiedKey] = useState(null)
   const [isCommitting, setIsCommitting] = useState(false)
@@ -129,10 +131,10 @@ export default function SmartContractPage() {
       <div className="pb-6 mb-6 border-b border-slate-800">
         <button
           onClick={() => navigate('/dashboard')}
-          className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2"
+          className="inline-flex items-center space-x-1.5 text-xs font-mono text-cyan-400 hover:text-cyan-300 transition-colors mb-2 cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Return to Dashboard Overview</span>
+          <span>{t('contractReturnDash')}</span>
         </button>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
@@ -146,10 +148,10 @@ export default function SmartContractPage() {
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 mt-2">
-              Smart Contract Anchor & Consensus Management
+              {t('contractHeaderTitle')}
             </h1>
             <p className="text-xs font-mono text-slate-400 mt-1">
-              Direct administrative interaction with Ethereum L2 decentralized Merkle root commitments.
+              {t('contractHeaderDesc')}
             </p>
           </div>
 
@@ -158,19 +160,19 @@ export default function SmartContractPage() {
             <button
               onClick={handleCommitCurrentRoot}
               disabled={isCommitting}
-              className="px-4 py-2.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all flex items-center space-x-2 disabled:opacity-60"
+              className="px-4 py-2.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all flex items-center space-x-2 disabled:opacity-60 cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${isCommitting ? 'animate-spin' : ''}`} />
-              <span>{isCommitting ? 'Broadcasting to L2...' : 'Commit Live Root Anchor'}</span>
+              <span>{isCommitting ? t('contractCommitting') : t('contractCommitBtn')}</span>
             </button>
 
             <button
               onClick={handleProbeConsensus}
               disabled={isProbing}
-              className="px-4 py-2.5 rounded-xl font-mono text-xs border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200 transition-all flex items-center space-x-2"
+              className="px-4 py-2.5 rounded-xl font-mono text-xs border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-slate-200 transition-all flex items-center space-x-2 cursor-pointer"
             >
               <Activity className={`w-4 h-4 text-emerald-400 ${isProbing ? 'animate-pulse' : ''}`} />
-              <span>Probe Validator Quorum</span>
+              <span>{t('contractProbeBtn')}</span>
             </button>
           </div>
         </div>
@@ -201,7 +203,7 @@ export default function SmartContractPage() {
           </div>
           <button
             onClick={() => copyToClipboard('0x9e7a2b918f43021c6014e38992a5482310491b8f', 'contract')}
-            className="w-full mt-2 py-1.5 px-2 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-400 hover:text-cyan-300 flex items-center justify-center space-x-1.5 transition-colors"
+            className="w-full mt-2 py-1.5 px-2 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-400 hover:text-cyan-300 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
           >
             {copiedKey === 'contract' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copiedKey === 'contract' ? 'Copied to Clipboard' : 'Copy Address'}</span>
@@ -211,21 +213,21 @@ export default function SmartContractPage() {
         {/* Card 2: Active Anchored Merkle Root */}
         <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 text-[10px] uppercase font-mono">
-            <span>Canonical Merkle Root</span>
+            <span>{t('verifyOnChainRoot')}</span>
             <Database className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="my-2">
             <div className="text-xs font-mono font-bold text-emerald-300 truncate">
               {onChainMerkleRoot}
             </div>
-            <div className="text-[10px] text-slate-400 font-mono mt-0.5">On-Chain State Commitment</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-0.5">{t('verifyOnChainDesc')}</div>
           </div>
           <button
             onClick={() => copyToClipboard(onChainMerkleRoot, 'root')}
-            className="w-full mt-2 py-1.5 px-2 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-400 hover:text-emerald-300 flex items-center justify-center space-x-1.5 transition-colors"
+            className="w-full mt-2 py-1.5 px-2 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-slate-400 hover:text-emerald-300 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
           >
             {copiedKey === 'root' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copiedKey === 'root' ? 'Copied Root' : 'Copy Merkle Root'}</span>
+            <span>{copiedKey === 'root' ? 'Copied Master Seal' : 'Copy Master Seal'}</span>
           </button>
         </div>
 
@@ -239,7 +241,7 @@ export default function SmartContractPage() {
             <div className="text-sm font-mono font-bold text-slate-200">
               Ethereum Sepolia L2
             </div>
-            <div className="text-[10px] text-slate-400 font-mono mt-0.5">Arbitrum Orbit Mesh // Batch ID #4092</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-0.5">Orbit Mesh // Batch ID #4092</div>
           </div>
           <div className="mt-2 py-1 px-2.5 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between text-[11px] font-mono">
             <span className="text-slate-400">Gas Reserve:</span>
@@ -257,11 +259,11 @@ export default function SmartContractPage() {
             <div className="text-xs font-mono font-bold text-purple-300 truncate">
               {oracleKey}
             </div>
-            <div className="text-[10px] text-slate-400 font-mono mt-0.5">ECDSA Secp256k1 Hardware Enclave</div>
+            <div className="text-[10px] text-slate-400 font-mono mt-0.5">ECDSA Secp256k1 Enclave</div>
           </div>
           <button
             onClick={handleRotateOracleKey}
-            className="w-full mt-2 py-1.5 px-2 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-purple-400 hover:text-purple-300 hover:border-purple-500/40 flex items-center justify-center space-x-1.5 transition-colors"
+            className="w-full mt-2 py-1.5 px-2 rounded-lg bg-slate-950 border border-slate-800 text-[11px] font-mono text-purple-400 hover:text-purple-300 hover:border-purple-500/40 flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
           >
             <Key className="w-3.5 h-3.5" />
             <span>Rotate Key</span>
@@ -298,16 +300,16 @@ export default function SmartContractPage() {
         </div>
       )}
 
-      {/* Smart Contract Interaction & Historical Commitments Table */}
+      {/* Historical Commitments Table */}
       <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl backdrop-blur-md">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 mb-4 border-b border-slate-800 gap-2">
           <div>
             <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
               <Cpu className="w-4 h-4 text-cyan-400" />
-              <span>On-Chain Commitment Ledger & Event Stream</span>
+              <span>On-Chain Master Seal Commitment Ledger</span>
             </h2>
             <p className="text-xs font-mono text-slate-400 mt-0.5">
-              Cryptographic verification trail of state root commits anchored to Ethereum L2.
+              Cryptographic verification trail of state root commits anchored to decentralized public ledger.
             </p>
           </div>
 
@@ -320,13 +322,13 @@ export default function SmartContractPage() {
           <table className="w-full text-left font-mono text-xs">
             <thead>
               <tr className="border-b border-slate-800 text-slate-500 text-[11px] uppercase">
-                <th className="py-3 px-3">Transaction Hash</th>
-                <th className="py-3 px-3">Block #</th>
-                <th className="py-3 px-3">Method</th>
-                <th className="py-3 px-3">Committed Merkle Root</th>
-                <th className="py-3 px-3">Gas Used</th>
-                <th className="py-3 px-3">Consensus Quorum</th>
-                <th className="py-3 px-3 text-right">Timestamp</th>
+                <th className="py-3 px-3">{t('contractColTx')}</th>
+                <th className="py-3 px-3">{t('contractColBlock')}</th>
+                <th className="py-3 px-3">{t('contractColMethod')}</th>
+                <th className="py-3 px-3">{t('contractColRoot')}</th>
+                <th className="py-3 px-3">{t('contractColGas')}</th>
+                <th className="py-3 px-3">{t('contractColQuorum')}</th>
+                <th className="py-3 px-3 text-right">{t('contractColTime')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-slate-300">

@@ -17,8 +17,10 @@ import {
   Sparkles
 } from 'lucide-react'
 import { calculateFileWebCryptoSha256, fallbackSha256 } from '../../utils/crypto'
+import { useLanguage } from '../../context/LanguageContext'
 
 export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
+  const { t } = useLanguage()
   const fileInputRef = useRef(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isHashing, setIsHashing] = useState(false)
@@ -198,7 +200,7 @@ export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
       {/* Comparison Reference Selector */}
       <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-mono">
         <div className="flex items-center space-x-2">
-          <span className="text-slate-400">Comparison Target:</span>
+          <span className="text-slate-400">{t('fileVerifierTarget')}</span>
           <div className="flex space-x-1.5">
             <button
               onClick={() => setComparisonMode('active_block')}
@@ -208,7 +210,7 @@ export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Active Block #{activeLog?.blockHeight}
+              {t('fileVerifierActiveBlock', { block: activeLog?.blockHeight || '0' })}
             </button>
             <button
               onClick={() => setComparisonMode('chain_search')}
@@ -218,13 +220,13 @@ export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
                   : 'text-slate-400 hover:text-slate-200'
               }`}
             >
-              Entire Chain Search
+              {t('fileVerifierChainSearch')}
             </button>
           </div>
         </div>
 
         <div className="text-[11px] text-slate-400 truncate max-w-xs">
-          Reference Hash: <code className="text-cyan-300 font-bold">{targetReferenceHash.substring(0, 16)}...</code>
+          {t('fileVerifierRefHash')} <code className="text-cyan-300 font-bold">{targetReferenceHash.substring(0, 16)}...</code>
         </div>
       </div>
 
@@ -255,12 +257,11 @@ export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
           </div>
           
           <div className="font-mono text-xs font-bold text-slate-200">
-            {isDragging ? 'Drop file to compute SHA-256 digest...' : 'Drag & drop any system file here, or click to browse'}
+            {isDragging ? t('fileVerifierDropActive') : t('fileVerifierDropIdle')}
           </div>
 
           <p className="font-mono text-[11px] text-slate-400 max-w-md">
-            Import any file from your computer (.log, .json, .txt, .pdf, .docx, images).
-            The SHA-256 hash will be calculated instantly in-browser via the Web Crypto API.
+            {t('fileVerifierDropDesc')}
           </p>
 
           <button
@@ -269,10 +270,10 @@ export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
               e.stopPropagation()
               triggerFilePicker()
             }}
-            className="mt-2 px-4 py-2 rounded-xl text-xs font-mono font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 transition-colors flex items-center space-x-1.5"
+            className="mt-2 px-4 py-2 rounded-xl text-xs font-mono font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 transition-colors flex items-center space-x-1.5 cursor-pointer"
           >
             <File className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Select File From System</span>
+            <span>{t('fileVerifierSelectBtn')}</span>
           </button>
         </div>
       </div>
@@ -281,7 +282,7 @@ export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
       {isHashing && (
         <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center space-x-3 text-xs font-mono text-cyan-300 animate-pulse">
           <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
-          <span>Hashing file payload with Web Crypto API (SHA-256)...</span>
+          <span>{t('fileVerifierHashing')}</span>
         </div>
       )}
 
@@ -313,7 +314,7 @@ export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
                       className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 border border-emerald-500 text-emerald-300 flex items-center space-x-1.5 shadow-sm"
                     >
                       <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                      <span>Intact / Authentic</span>
+                      <span>{t('fileVerifierIntact')}</span>
                     </span>
                   ) : (
                     <span 
@@ -321,14 +322,14 @@ export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
                       className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-500/20 border border-red-500 text-red-300 flex items-center space-x-1.5 shadow-sm"
                     >
                       <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                      <span>Tamper Detected</span>
+                      <span>{t('fileVerifierTampered')}</span>
                     </span>
                   )}
                 </div>
                 <div className="text-[11px] text-slate-400 mt-1">
                   {isAuthentic 
-                    ? `File SHA-256 matches blockchain state (Block #${matchedBlock?.blockHeight || activeLog.blockHeight})` 
-                    : 'Cryptographic divergence: Hash does not match the blockchain reference anchor'}
+                    ? t('fileVerifierIntactDesc', { block: matchedBlock?.blockHeight || activeLog.blockHeight }) 
+                    : t('fileVerifierTamperedDesc')}
                 </div>
               </div>
             </div>
@@ -338,14 +339,14 @@ export default function FileTamperVerifier({ logs, activeLog, onLogSelect }) {
               <button
                 type="button"
                 onClick={handleToggleSimulateTamper}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 border ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 border cursor-pointer ${
                   simulatedTamperActive
                     ? 'bg-emerald-950/80 border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/60'
                     : 'bg-red-950/80 border-red-500/50 text-red-300 hover:bg-red-900/60'
                 }`}
               >
                 <Zap className="w-3.5 h-3.5" />
-                <span>{simulatedTamperActive ? 'Revert to Original File' : 'Simulate File Tampering (Flip 1 Byte)'}</span>
+                <span>{simulatedTamperActive ? t('fileVerifierRevertBtn') : t('fileVerifierSimulateBtn')}</span>
               </button>
             </div>
           </div>

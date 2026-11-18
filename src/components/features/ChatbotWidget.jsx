@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { loadReadmeDocumentation } from '../../services/readmeService'
 import { generateSentinelAiResponse } from '../../services/sentinelAiEngine'
+import { useLanguage } from '../../context/LanguageContext'
 
 // Quick suggestion prompts
 const SUGGESTED_PROMPTS = [
@@ -204,6 +205,7 @@ function MarkdownView({ text }) {
 }
 
 export default function ChatbotWidget() {
+  const { t } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [showDocStats, setShowDocStats] = useState(false)
@@ -431,7 +433,7 @@ export default function ChatbotWidget() {
               <div>
                 <div className="flex items-center space-x-1.5">
                   <span className="text-xs font-bold text-slate-100 tracking-wider">
-                    SENTINEL AI ASSISTANT
+                    {t('botHeaderTitle')}
                   </span>
                   <span className="px-1.5 py-0.2 text-[9px] font-mono uppercase bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 rounded">
                     SOC v2.4
@@ -716,7 +718,7 @@ export default function ChatbotWidget() {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about hash-chains, Merkle roots, RBAC, etc..."
+                placeholder={t('botPlaceholder')}
                 disabled={isThinking}
                 className="w-full pl-3.5 pr-12 py-2.5 bg-transparent text-xs font-mono text-slate-100 placeholder:text-slate-500 focus:outline-none"
               />
@@ -732,7 +734,7 @@ export default function ChatbotWidget() {
             </div>
 
             <div className="mt-1.5 flex items-center justify-between px-1 text-[10px] font-mono text-slate-500">
-              <span>Enter to send • Shift+Enter for newline</span>
+              <span>{t('botInputHint')}</span>
               <span className="text-cyan-500/70">Powered by README.md Context</span>
             </div>
           </div>

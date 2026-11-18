@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ShieldAlert, Lock, ArrowLeft, LogIn, AlertOctagon, Terminal } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useRouter } from '../../context/RouterContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 /**
  * AdminRouteGuard
@@ -12,6 +13,7 @@ import { useRouter } from '../../context/RouterContext'
 export default function AdminRouteGuard({ children }) {
   const { user, isAdmin, validateSession } = useAuth()
   const { navigate, currentPath } = useRouter()
+  const { t } = useLanguage()
   const [countdown, setCountdown] = useState(20)
   const [isPaused, setIsPaused] = useState(false)
 
@@ -48,9 +50,9 @@ export default function AdminRouteGuard({ children }) {
           <div className="w-12 h-12 rounded-2xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 flex items-center justify-center mx-auto mb-4 animate-spin">
             <Lock className="w-6 h-6" />
           </div>
-          <div className="font-bold text-slate-100 text-sm">Verifying Security Clearance...</div>
+          <div className="font-bold text-slate-100 text-sm">{t('guardVerifying')}</div>
           <p className="text-slate-400 mt-2 text-[11px]">
-            Checking cryptographic session token against GovChain Sentinel RBAC ACL...
+            {t('guardCheckingToken')}
           </p>
         </div>
       </div>
@@ -76,30 +78,30 @@ export default function AdminRouteGuard({ children }) {
               <div>
                 <div className="flex items-center space-x-2">
                   <span className="px-2.5 py-0.5 rounded text-[10px] font-mono bg-red-950 border border-red-500 text-red-300 font-bold uppercase tracking-wider">
-                    403 FORBIDDEN // ACCESS DENIED
+                    {t('guardAccessDenied')}
                   </span>
                   <span className="text-[11px] font-mono text-red-400 flex items-center space-x-1">
                     <AlertOctagon className="w-3.5 h-3.5 inline" />
-                    <span>ACL VIOLATION</span>
+                    <span>ACL ENFORCEMENT</span>
                   </span>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-black text-slate-100 mt-1">
-                  Level-5 Administrative Clearance Required
+                  {t('guardAdminRequired')}
                 </h1>
               </div>
             </div>
 
             <div className="text-right sm:text-right w-full sm:w-auto">
-              <div className="text-[10px] font-mono text-slate-500 uppercase">Auto-Redirect</div>
+              <div className="text-[10px] font-mono text-slate-500 uppercase">{t('guardAutoRedirect')}</div>
               <div className="text-sm font-mono font-bold text-red-400">
-                {isPaused ? 'Redirect Paused' : `${countdown}s to Dashboard`}
+                {isPaused ? t('guardRedirectPaused') : t('guardSecondsToDash', { seconds: countdown })}
               </div>
               <button
                 type="button"
                 onClick={() => setIsPaused(!isPaused)}
                 className="text-[10px] font-mono text-cyan-400 hover:text-cyan-300 underline block mt-0.5"
               >
-                {isPaused ? 'Resume Countdown' : 'Pause Auto-Redirect'}
+                {isPaused ? t('guardResumeRedirect') : t('guardPauseRedirect')}
               </button>
             </div>
           </div>
@@ -146,18 +148,18 @@ export default function AdminRouteGuard({ children }) {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
             <button
               onClick={() => navigate('/dashboard')}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all flex items-center justify-center space-x-2"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-mono text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Return to Standard Dashboard</span>
+              <span>{t('guardReturnDash')}</span>
             </button>
 
             <button
               onClick={() => navigate('/login')}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-mono text-xs border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all flex items-center justify-center space-x-2"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl font-mono text-xs border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
               <LogIn className="w-4 h-4 text-cyan-400" />
-              <span>Authenticate with Admin Account</span>
+              <span>{t('guardAuthAdmin')}</span>
             </button>
           </div>
 

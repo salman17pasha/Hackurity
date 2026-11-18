@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ShieldCheck, Download, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { generateInjectedPayloadCertificate, downloadCertificateFile } from '../../utils/payloadCertificate'
+import { useLanguage } from '../../context/LanguageContext'
 
 /**
  * InjectedPayloadCertificateButton
@@ -14,10 +15,13 @@ export default function InjectedPayloadCertificateButton({
   sourceName = 'Database Transaction Record',
   threatVector = 'ADVERSARIAL_PAYLOAD_MUTATION',
   className = '',
-  buttonLabel = 'Injected Payload Certificate'
+  buttonLabel
 }) {
+  const { t } = useLanguage()
   const [status, setStatus] = useState('idle') // 'idle' | 'generating' | 'success' | 'error'
   const [feedbackMessage, setFeedbackMessage] = useState('')
+
+  const displayButtonLabel = buttonLabel || t('certBtnLabel')
 
   const handleGenerateAndDownload = async () => {
     if (!payload) {
@@ -29,7 +33,7 @@ export default function InjectedPayloadCertificateButton({
 
     try {
       setStatus('generating')
-      setFeedbackMessage('Computing SHA-256 & signing certificate...')
+      setFeedbackMessage('Computing digital seal & signing certificate...')
 
       // Generate certificate with Web Crypto SHA-256
       const cert = await generateInjectedPayloadCertificate({
@@ -67,7 +71,7 @@ export default function InjectedPayloadCertificateButton({
         id="injected-payload-cert-btn"
         onClick={handleGenerateAndDownload}
         disabled={status === 'generating'}
-        className={`w-full py-2.5 px-4 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-2 border shadow-sm ${
+        className={`w-full py-2.5 px-4 rounded-xl font-mono text-xs font-bold transition-all duration-200 flex items-center justify-center space-x-2 border shadow-sm cursor-pointer ${
           status === 'generating'
             ? 'bg-slate-800 border-slate-700 text-slate-400 cursor-wait'
             : status === 'success'
@@ -80,23 +84,23 @@ export default function InjectedPayloadCertificateButton({
         {status === 'generating' ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
-            <span>Generating Certificate...</span>
+            <span>{t('certBtnGenerating')}</span>
           </>
         ) : status === 'success' ? (
           <>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>Certificate Downloaded</span>
+            <span>{t('certBtnDownloaded')}</span>
           </>
         ) : status === 'error' ? (
           <>
             <AlertCircle className="w-4 h-4 text-red-400" />
-            <span>Generation Failed</span>
+            <span>{t('certBtnFailed')}</span>
           </>
         ) : (
           <>
             <ShieldCheck className="w-4 h-4 text-cyan-200" />
             <Download className="w-3.5 h-3.5 text-cyan-100" />
-            <span>{buttonLabel}</span>
+            <span>{displayButtonLabel}</span>
           </>
         )}
       </button>

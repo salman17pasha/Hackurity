@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { LanguageProvider } from './context/LanguageContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AuditProvider, useAudit } from './context/AuditContext'
 import { RouterProvider, useRouter } from './context/RouterContext'
@@ -123,7 +124,9 @@ function AppContent() {
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 transition-colors">
       <Navbar />
       <main className="flex-1">
-        {renderCurrentPage()}
+        <div key={currentPath} className="tab-transition-container">
+          {renderCurrentPage()}
+        </div>
       </main>
       <Footer />
 
@@ -144,12 +147,14 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AuditProvider>
-        <RouterProvider>
-          <AppContent />
-        </RouterProvider>
-      </AuditProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <AuditProvider>
+          <RouterProvider>
+            <AppContent />
+          </RouterProvider>
+        </AuditProvider>
+      </AuthProvider>
+    </LanguageProvider>
   )
 }

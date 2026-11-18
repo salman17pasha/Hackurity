@@ -17,6 +17,7 @@ import {
   ShieldCheck
 } from 'lucide-react'
 import { useAudit } from '../../context/AuditContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { fallbackSha256 } from '../../utils/crypto'
 
 export default function FolderImportModal() {
@@ -29,6 +30,7 @@ export default function FolderImportModal() {
     batchIngestImportedFiles, 
     clearImportedQueue 
   } = useAudit()
+  const { t } = useLanguage()
 
   const folderInputRef = useRef(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -218,10 +220,10 @@ export default function FolderImportModal() {
             </div>
 
             <h3 className="text-base font-bold text-slate-200">
-              No Local Folder Imported Yet
+              {t('folderModalTitle')}
             </h3>
             <p className="text-xs text-slate-400 max-w-md mx-auto mt-2 leading-relaxed">
-              Click below to choose a system directory. GovChain Sentinel will recursively read files, detect log structures, compute SHA-256 checksums, and prepare them for chain anchoring.
+              {t('folderModalDesc')}
             </p>
 
             <div className="mt-6 flex justify-center">
@@ -229,10 +231,10 @@ export default function FolderImportModal() {
                 type="button"
                 onClick={handleTriggerPicker}
                 disabled={isProcessing}
-                className="px-6 py-3 rounded-xl font-mono text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 shadow-cyan-glow transition-all flex items-center space-x-2"
+                className="px-6 py-3 rounded-xl font-mono text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 shadow-cyan-glow transition-all flex items-center space-x-2 cursor-pointer"
               >
                 <FolderUp className="w-4 h-4" />
-                <span>{isProcessing ? 'Reading Folder Structure...' : 'Choose System Folder to Import'}</span>
+                <span>{isProcessing ? 'Reading Folder Structure...' : t('folderModalPickerBtn')}</span>
               </button>
             </div>
           </div>

@@ -15,10 +15,12 @@ import {
 } from 'lucide-react'
 import { useRouter } from '../context/RouterContext'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function LoginSuccessPage() {
   const { user } = useAuth()
   const { navigate } = useRouter()
+  const { t } = useLanguage()
   const [agreed, setAgreed] = useState(false)
   const [hasScrolledTerms, setHasScrolledTerms] = useState(false)
 
@@ -61,14 +63,14 @@ export default function LoginSuccessPage() {
           
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-900 border border-emerald-500/40 text-emerald-300 text-xs font-mono mb-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>SESSION ATTESTED // CRYPTOGRAPHICALLY SIGNED</span>
+            <span>SESSION ATTESTED // DIGITALLY SEALED</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight">
-            Login Successful
+            {t('loginSuccessTitle')}
           </h1>
           <p className="mt-1 text-xs font-mono text-slate-400">
-            Welcome to GovChain Sentinel SOC Command. Please review and accept protocol terms to continue.
+            {t('loginSuccessSubtitle')}
           </p>
         </div>
 
@@ -114,7 +116,7 @@ export default function LoginSuccessPage() {
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
             <div className="flex items-center space-x-2 text-slate-200 font-mono text-xs font-bold uppercase tracking-wider">
               <FileText className="w-4 h-4 text-cyan-400" />
-              <span>Privacy Policy & Terms and Conditions</span>
+              <span>{t('loginTermsTitle')}</span>
             </div>
             <span className="text-[10px] font-mono text-slate-500">
               Protocol v2.4-GOV
@@ -131,16 +133,16 @@ export default function LoginSuccessPage() {
                 1. Sovereign Data Privacy & Governance Protocol
               </h3>
               <p className="text-slate-400 text-[11px]">
-                GovChain Sentinel processes government audit event streams, judicial records, land mutations, and treasury disbursements under strict National Sovereign Data Protection standards. All telemetry transmitted to this workstation is encrypted end-to-end via TLS 1.3. No sensitive citizen Personally Identifiable Information (PII) is cached or exported to non-sovereign nodes.
+                GovChain Sentinel processes government audit event streams, judicial records, land deeds, and public fund releases under strict National Sovereign Data Protection standards. All telemetry transmitted to this workstation is protected end-to-end.
               </p>
             </div>
 
             <div>
               <h3 className="font-bold text-cyan-300 text-xs uppercase mb-1">
-                2. Cryptographic Immutability & Hash-Chain Verification
+                2. Tamper-Proof Digital Seals & Verification
               </h3>
               <p className="text-slate-400 text-[11px]">
-                By entering the Sentinel SOC environment, you acknowledge that every audit log entry is bound via sequential SHA-256 hashing and binary Merkle Tree root commitments anchored to decentralized Ethereum L2 smart contracts. Recomputation and verification algorithms execute client-side using the W3C Web Crypto API.
+                By entering the Sentinel environment, you acknowledge that every audit log entry is bound via sequential SHA-256 digital seals and binary Merkle tree root commitments anchored to decentralized public smart contracts.
               </p>
             </div>
 
@@ -149,25 +151,16 @@ export default function LoginSuccessPage() {
                 3. Operational Access, Security Clearance & Authorization
               </h3>
               <p className="text-slate-400 text-[11px]">
-                Access to the Sentinel dashboard is role-segregated. Administrator credentials permit full access to adversarial tamper simulation labs, malware threat injections, and forensic certification generation. Normal Auditor accounts retain read-only verification and streaming log telemetry privileges. You agree not to distribute or share authenticated session credentials.
+                Access to the Sentinel dashboard is role-segregated. Administrator credentials permit full access to safety simulation labs and certification generation. Citizen auditor accounts retain full read-only verification privileges.
               </p>
             </div>
 
             <div>
               <h3 className="font-bold text-cyan-300 text-xs uppercase mb-1">
-                4. Adversarial Tamper Simulation & Ingestion Ethics
+                4. Continuous Public Transparency Agreement
               </h3>
               <p className="text-slate-400 text-[11px]">
-                The Tamper Simulation laboratory is strictly provided for hackathon demonstration, adversarial vulnerability testing, and educational verification of cryptographic fault tolerance. Any system file imported for SHA-256 analysis is processed locally in browser memory and tested against consensus state benchmarks.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-cyan-300 text-xs uppercase mb-1">
-                5. Continuous Audit Trail & Attestation Agreement
-              </h3>
-              <p className="text-slate-400 text-[11px]">
-                Your operator actions, including log inspection, certificate downloads, and verification engine executions, are committed to the forensic activity log. By clicking continue, you confirm authorization to view and audit sovereign cryptographic records.
+                Your auditor actions, including log inspection and verification engine executions, are committed to the forensic audit log.
               </p>
             </div>
           </div>
@@ -180,41 +173,28 @@ export default function LoginSuccessPage() {
                 id="termsCheckbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-slate-700 text-cyan-500 focus:ring-cyan-400 focus:ring-offset-slate-900 bg-slate-950 cursor-pointer accent-cyan-500"
+                className="mt-1 w-4 h-4 rounded border-slate-700 bg-slate-950 text-cyan-500 focus:ring-cyan-500/40 cursor-pointer"
               />
-              <div className="text-xs font-mono text-slate-300 group-hover:text-slate-100 transition-colors">
-                <span className="font-semibold text-slate-200">
-                  [x] I agree to the Privacy Terms & Conditions
-                </span>
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  I confirm compliance with GovChain Sentinel cryptographic governance and sovereign privacy protocols.
-                </p>
-              </div>
+              <span className="text-xs font-mono text-slate-300 group-hover:text-slate-100 transition-colors">
+                {t('loginTermsAgree')}
+              </span>
             </label>
           </div>
 
-          {/* Action Button: Continue to Dashboard */}
+          {/* Continue Button */}
           <div className="mt-5">
             <button
-              type="button"
-              id="continueDashboardBtn"
-              disabled={!agreed}
               onClick={handleContinue}
-              className={`w-full py-3.5 rounded-xl font-mono text-xs font-bold transition-all flex items-center justify-center space-x-2 ${
-                agreed 
-                  ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transform hover:-translate-y-0.5 cursor-pointer' 
-                  : 'bg-slate-800/80 border border-slate-700/60 text-slate-500 cursor-not-allowed opacity-60'
+              disabled={!agreed}
+              className={`w-full py-3.5 rounded-xl font-mono text-xs font-bold transition-all flex items-center justify-center space-x-2 cursor-pointer ${
+                agreed
+                  ? 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-cyan-glow transform hover:-translate-y-0.5'
+                  : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/60'
               }`}
             >
-              <span>Continue to Dashboard</span>
+              <span>{t('loginTermsContinue')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
-            {!agreed && (
-              <p className="text-center text-[10px] font-mono text-slate-500 mt-2 flex items-center justify-center space-x-1">
-                <AlertCircle className="w-3 h-3 text-amber-500/80" />
-                <span>Please check the agreement box above to activate dashboard access</span>
-              </p>
-            )}
           </div>
 
         </div>

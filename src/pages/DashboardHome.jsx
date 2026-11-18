@@ -17,12 +17,14 @@ import {
 import { useAuth } from '../context/AuthContext'
 import { useRouter } from '../context/RouterContext'
 import { useAudit } from '../context/AuditContext'
+import { useLanguage } from '../context/LanguageContext'
 import CyberCard from '../components/ui/CyberCard'
 import { downloadMalwareCertificate } from '../utils/certificateGenerator'
 
 export default function DashboardHome() {
   const { user, isAdmin } = useAuth()
   const { navigate } = useRouter()
+  const { t } = useLanguage()
   const { 
     logs, 
     lastVerificationResult, 
@@ -49,21 +51,21 @@ export default function DashboardHome() {
           <div>
             <div className="flex items-center space-x-3">
               <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-cyan-950/70 border border-cyan-500/40 text-cyan-300">
-                ACTIVE SOC OPERATOR
+                {t('dashOperatorBadge')}
               </span>
               <span className={`text-xs font-mono px-2.5 py-0.5 rounded-full border ${
                 isAdmin 
                   ? 'bg-purple-950/60 border-purple-500/40 text-purple-300' 
                   : 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
               }`}>
-                ROLE: {user?.role || 'Guest'}
+                {t('dashRolePrefix')} {user?.role || 'Guest'}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 mt-2">
-              Welcome back, {user?.name || 'Authorized Auditor'}
+              {t('dashWelcome')} {user?.name || t('dashWelcomeDefault')}
             </h1>
             <p className="text-xs font-mono text-slate-400 mt-1">
-              Active Session: <span className="text-cyan-300">{user?.ip}</span> // Clearance: <span className="text-emerald-400">{user?.clearance}</span>
+              {t('dashSessionInfo')} <span className="text-cyan-300">{user?.ip}</span> // {t('dashClearanceInfo')} <span className="text-emerald-400">{user?.clearance}</span>
             </p>
           </div>
 
@@ -71,32 +73,32 @@ export default function DashboardHome() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center space-x-2 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 text-xs font-mono">
               <span className={`w-2 h-2 rounded-full ${isAdmin ? 'bg-purple-400' : 'bg-emerald-400'} animate-pulse`} />
-              <span className="text-slate-400">RBAC Clearance:</span>
+              <span className="text-slate-400">{t('dashRbacClearance')}</span>
               <span className={isAdmin ? 'text-purple-300 font-bold' : 'text-emerald-300 font-bold'}>
-                {isAdmin ? 'Level-5 Admin (Full Access)' : 'Level-2 Auditor (Restricted)'}
+                {isAdmin ? t('dashAdminAccess') : t('dashAuditorAccess')}
               </span>
             </div>
 
             {/* Live Streaming Toggle */}
             <button
               onClick={() => setIsStreaming(!isStreaming)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-mono border transition-all flex items-center space-x-2 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-mono border transition-all flex items-center space-x-2 cursor-pointer ${
                 isStreaming
                   ? 'bg-cyan-950/70 border-cyan-500/60 text-cyan-300 shadow-cyan-glow'
                   : 'bg-slate-950/80 border-slate-800 text-slate-400 hover:text-slate-200'
               }`}
             >
               <Radio className={`w-3.5 h-3.5 ${isStreaming ? 'animate-pulse text-cyan-400' : ''}`} />
-              <span>{isStreaming ? 'Live Stream: ON' : 'Live Stream: Paused'}</span>
+              <span>{isStreaming ? t('dashLiveStreamOn') : t('dashLiveStreamPaused')}</span>
             </button>
 
             {/* Folder Import Button */}
             <button
               onClick={openFolderModal}
-              className="px-3.5 py-2 rounded-xl text-xs font-mono bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyan-300 shadow-cyan-glow transition-all flex items-center space-x-2"
+              className="px-3.5 py-2 rounded-xl text-xs font-mono bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/40 text-cyan-300 shadow-cyan-glow transition-all flex items-center space-x-2 cursor-pointer"
             >
               <FolderUp className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Import Local Folder</span>
+              <span>{t('dashImportFolder')}</span>
             </button>
           </div>
 
@@ -105,30 +107,30 @@ export default function DashboardHome() {
         {/* Real-time System Metrics Bar */}
         <div className="mt-6 pt-5 border-t border-slate-800/80 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
           <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-            <div className="text-slate-500 text-[10px] uppercase">Active Block Height</div>
+            <div className="text-slate-500 text-[10px] uppercase">{t('dashActiveBlockHeight')}</div>
             <div className="text-lg font-bold text-slate-100 mt-0.5">#{latestBlock?.blockHeight || 1006}</div>
-            <div className="text-[10px] text-cyan-400">Total Logs: {blockCount}</div>
+            <div className="text-[10px] text-cyan-400">{t('dashTotalLogs')} {blockCount}</div>
           </div>
 
           <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-            <div className="text-slate-500 text-[10px] uppercase">Chain Integrity State</div>
+            <div className="text-slate-500 text-[10px] uppercase">{t('dashChainState')}</div>
             <div className={`text-lg font-bold mt-0.5 flex items-center space-x-1.5 ${
               isTampered ? 'text-red-400' : 'text-emerald-400'
             }`}>
               {isTampered ? (
                 <>
                   <ShieldAlert className="w-4 h-4 shrink-0 animate-pulse" />
-                  <span>TAMPER DETECTED</span>
+                  <span>{t('dashTamperDetected')}</span>
                 </>
               ) : (
                 <>
                   <ShieldCheck className="w-4 h-4 shrink-0" />
-                  <span>100% VERIFIED</span>
+                  <span>{t('dash100Verified')}</span>
                 </>
               )}
             </div>
             <div className="text-[10px] text-slate-500">
-              {isTampered ? 'Root Discrepancy Found' : 'NIST SP 800-57 Compliant'}
+              {isTampered ? t('dashRootDiscrepancy') : t('dashNistCompliant')}
             </div>
           </div>
 
@@ -141,19 +143,19 @@ export default function DashboardHome() {
             }`}
           >
             <div className="flex items-center justify-between text-slate-500 text-[10px] uppercase">
-              <span>Smart Contract Anchor</span>
-              {isAdmin && <span className="text-purple-400 group-hover:underline text-[9px] font-mono">MANAGE &gt;</span>}
+              <span>{t('dashContractAnchor')}</span>
+              {isAdmin && <span className="text-purple-400 group-hover:underline text-[9px] font-mono">{t('dashManageContract')}</span>}
             </div>
             <div className="text-xs font-mono text-cyan-300 truncate mt-1">
               0x9e7a...491b8f
             </div>
-            <div className="text-[10px] text-emerald-400">Ethereum L2 Verified</div>
+            <div className="text-[10px] text-emerald-400">{t('dashContractStatus')}</div>
           </div>
 
           <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-            <div className="text-slate-500 text-[10px] uppercase">Consensus Verification</div>
-            <div className="text-lg font-bold text-slate-100 mt-0.5">12 / 12 Nodes</div>
-            <div className="text-[10px] text-slate-400">Latency: 4.2ms</div>
+            <div className="text-slate-500 text-[10px] uppercase">{t('dashConsensusTitle')}</div>
+            <div className="text-lg font-bold text-slate-100 mt-0.5">{t('dashConsensusNodes')}</div>
+            <div className="text-[10px] text-slate-400">{t('dashConsensusLatency')}</div>
           </div>
         </div>
 
@@ -170,17 +172,17 @@ export default function DashboardHome() {
               <div>
                 <div className="flex items-center space-x-2">
                   <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-red-950 border border-red-500 text-red-300 font-bold uppercase">
-                    SEV-1 SECURITY INCIDENT
+                    SEV-1 SECURITY ALERT
                   </span>
                   <span className="text-xs font-mono text-red-400">
-                    ID: {malwareIncident?.incidentId || 'INC-2026-MAL-DETECTED'}
+                    {t('incidentId')} {malwareIncident?.incidentId || 'INC-2026-MAL-DETECTED'}
                   </span>
                 </div>
                 <h3 className="text-base font-bold text-slate-100 mt-1">
-                  Cryptographic Integrity Breach / Malware Invalidation Flagged
+                  {t('incidentTitle')}
                 </h3>
                 <p className="text-xs text-slate-300 mt-0.5 font-mono">
-                  {malwareIncident?.threatSignature || 'SHA-256 block digest mismatch and Merkle root divergence detected across audit mesh.'}
+                  {malwareIncident?.threatSignature || t('incidentSubtitle')}
                 </p>
               </div>
             </div>
@@ -188,16 +190,16 @@ export default function DashboardHome() {
             <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
               <button
                 onClick={openMalwareModal}
-                className="px-3.5 py-2 rounded-xl text-xs font-mono bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-200 transition-colors"
+                className="px-3.5 py-2 rounded-xl text-xs font-mono bg-slate-900 border border-slate-700 hover:border-slate-600 text-slate-200 transition-colors cursor-pointer"
               >
-                View Certificate
+                {t('incidentViewCert')}
               </button>
               <button
                 onClick={() => downloadMalwareCertificate(malwareIncident)}
-                className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white shadow-crimson-glow transition-all flex items-center space-x-2"
+                className="px-4 py-2 rounded-xl text-xs font-mono font-bold bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white shadow-crimson-glow transition-all flex items-center space-x-2 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>Download Malware Incident Certificate</span>
+                <span>{t('incidentDownloadCert')}</span>
               </button>
             </div>
           </div>
@@ -210,17 +212,17 @@ export default function DashboardHome() {
           <div className="flex items-center space-x-3">
             <HardDrive className="w-4 h-4 text-cyan-400 shrink-0" />
             <div>
-              <span className="text-slate-400">Local Folder Ingestion Queue: </span>
+              <span className="text-slate-400">{t('folderQueueTitle')} </span>
               <strong className="text-cyan-300 font-bold">{importedFolderName}</strong>
-              <span className="text-slate-500 ml-2">({importedFolderQueue.length} files loaded & verified)</span>
+              <span className="text-slate-500 ml-2">({importedFolderQueue.length} {t('folderQueueFiles')})</span>
             </div>
           </div>
 
           <button
             onClick={openFolderModal}
-            className="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 text-[11px] transition-colors"
+            className="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/50 text-[11px] transition-colors cursor-pointer"
           >
-            Review Queue & Batch Ingest &rarr;
+            {t('folderReviewQueue')}
           </button>
         </div>
       )}
@@ -234,39 +236,39 @@ export default function DashboardHome() {
           <div>
             <div className="flex items-center space-x-2">
               <span className="text-sm font-bold text-slate-100 font-mono">
-                SENTINEL AI ASSISTANT // AUDITOR KNOWLEDGE BASE
+                {t('aiBannerTitle')}
               </span>
               <span className="px-2 py-0.5 text-[10px] font-mono uppercase bg-cyan-950 border border-cyan-500/40 text-cyan-300 rounded">
-                README INDEXED
+                {t('aiBannerBadge')}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Have questions about hash-chaining, Merkle anchors, RBAC privileges, or tamper resistance? Ask the AI assistant directly.
+              {t('aiBannerDesc')}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai', { detail: { prompt: 'How does the hash-chain work?' } }))}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai', { detail: { prompt: t('aiPrompt1') } }))}
             className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 text-xs font-mono transition-colors flex items-center space-x-1.5 cursor-pointer"
           >
             <Sparkles className="w-3 h-3 text-cyan-400" />
-            <span>Hash-Chain Mechanics?</span>
+            <span>{t('aiPrompt1')}</span>
           </button>
           <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai', { detail: { prompt: 'What is the role of an auditor?' } }))}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai', { detail: { prompt: t('aiPrompt2') } }))}
             className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 text-xs font-mono transition-colors flex items-center space-x-1.5 cursor-pointer"
           >
             <Sparkles className="w-3 h-3 text-cyan-400" />
-            <span>Auditor Role?</span>
+            <span>{t('aiPrompt2')}</span>
           </button>
           <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai', { detail: { prompt: 'How are Merkle roots anchored to the smart contract?' } }))}
+            onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai', { detail: { prompt: t('aiPrompt3') } }))}
             className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 text-xs font-mono transition-colors flex items-center space-x-1.5 cursor-pointer"
           >
             <Sparkles className="w-3 h-3 text-cyan-400" />
-            <span>Merkle Anchors?</span>
+            <span>{t('aiPrompt3')}</span>
           </button>
         </div>
       </div>
@@ -274,41 +276,41 @@ export default function DashboardHome() {
       {/* Main Interactive Card Grid Layout */}
       <div className="mb-6">
         <h2 className="text-lg font-bold font-mono text-slate-200 mb-1">
-          Operations Center Modules
+          {t('dashModulesTitle')}
         </h2>
         <p className="text-xs text-slate-400 mb-6">
-          Click any card to launch its dedicated operational workspace.
+          {t('dashModulesSubtitle')}
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           {/* Card 1: Live Log Stream Card */}
           <CyberCard
-            title="Live Log Stream"
-            subtitle="Real-time Government Ingestion"
-            badge={`${blockCount} BLOCKS`}
+            title={t('cardLogsTitle')}
+            subtitle={t('cardLogsSubtitle')}
+            badge={`${blockCount} ${t('cardLogsBadge')}`}
             badgeVariant="cyan"
             icon={FileText}
             accentColor="cyan"
-            footerText="Inspect Live Log Stream"
+            footerText={t('cardLogsFooter')}
             onClick={() => navigate('/dashboard/logs')}
           >
             <p className="text-xs text-slate-400 mb-3">
-              Stream immutable audit events from Judiciary FIRs, Land Registry mutations, and Treasury disbursements with live keyword filtering.
+              {t('cardLogsDesc')}
             </p>
             <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800/80 font-mono text-[11px] space-y-1">
               <div className="flex justify-between text-slate-400">
-                <span>Latest Ingested:</span>
+                <span>{t('cardLogsLatest')}</span>
                 <span className="text-cyan-300 font-bold">{latestBlock?.id}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Department:</span>
+                <span>{t('cardLogsDept')}</span>
                 <span className="text-slate-200">{latestBlock?.department}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Streaming State:</span>
+                <span>{t('cardLogsState')}</span>
                 <span className={isStreaming ? 'text-emerald-400' : 'text-amber-400'}>
-                  {isStreaming ? 'Active (Auto-polling)' : 'Paused'}
+                  {isStreaming ? t('cardLogsStateActive') : t('dashLiveStreamPaused')}
                 </span>
               </div>
             </div>
@@ -316,31 +318,31 @@ export default function DashboardHome() {
 
           {/* Card 2: Cryptographic Hash-Chain Card */}
           <CyberCard
-            title="Hash-Chain Inspector"
-            subtitle="SHA-256 Sequential Graph"
-            badge="BLOCK HEIGHT"
+            title={t('cardChainTitle')}
+            subtitle={t('cardChainSubtitle')}
+            badge={`${logs.length} ${t('cardChainBadge')}`}
             badgeVariant="cyan"
             icon={LinkIcon}
             accentColor="cyan"
-            footerText="Inspect Cryptographic Chain"
+            footerText={t('cardChainFooter')}
             onClick={() => navigate('/dashboard/hash-chain')}
           >
             <p className="text-xs text-slate-400 mb-3">
-              Forensic inspection of cryptographic SHA-256 linkage connecting each block to its predecessor from Genesis to the active tip.
+              {t('cardChainDesc')}
             </p>
             <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800/80 font-mono text-[11px] space-y-1">
               <div className="flex justify-between text-slate-400">
-                <span>Chain Length:</span>
-                <span className="text-cyan-300 font-bold">#{latestBlock?.blockHeight} Blocks</span>
+                <span>{t('cardChainLength')}</span>
+                <span className="text-cyan-300 font-bold">#{latestBlock?.blockHeight}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Genesis Seed:</span>
+                <span>{t('cardChainFirst')}</span>
                 <span className="text-slate-300">00000000...0000</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Continuity:</span>
+                <span>{t('cardChainContinuity')}</span>
                 <span className={isTampered ? 'text-red-400' : 'text-emerald-400'}>
-                  {isTampered ? 'Broken Chain Detected' : '100% Intact Linkage'}
+                  {isTampered ? t('cardChainBroken') : t('cardChainIntact')}
                 </span>
               </div>
             </div>
@@ -348,17 +350,17 @@ export default function DashboardHome() {
 
           {/* Card 3: Verification Engine Card */}
           <CyberCard
-            title="Verification Engine"
-            subtitle="Merkle Proof Auditor"
-            badge={isTampered ? 'TAMPER ALERT' : 'CHAIN VALID'}
+            title={t('cardVerifyTitle')}
+            subtitle={t('cardVerifySubtitle')}
+            badge={isTampered ? t('cardVerifyBadgeAlert') : t('cardVerifyBadgeValid')}
             badgeVariant={isTampered ? 'red' : 'emerald'}
             icon={isTampered ? ShieldAlert : ShieldCheck}
             accentColor={isTampered ? 'red' : 'emerald'}
-            footerText="Run Integrity Verification"
+            footerText={t('cardVerifyFooter')}
             onClick={() => navigate('/dashboard/verify')}
           >
             <p className="text-xs text-slate-400 mb-3">
-              Cross-reference local state logs against the anchored smart contract Merkle root. Run mathematical proofs to detect unauthorized alterations.
+              {t('cardVerifyDesc')}
             </p>
             <div className={`p-3 rounded-lg border font-mono text-[11px] space-y-1 ${
               isTampered 
@@ -366,45 +368,45 @@ export default function DashboardHome() {
                 : 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300'
             }`}>
               <div className="flex justify-between">
-                <span>Engine Status:</span>
-                <span className="font-bold">{isTampered ? '🔴 TAMPER DETECTED' : '🟢 INTEGRITY VALID'}</span>
+                <span>{t('cardVerifyStatus')}</span>
+                <span className="font-bold">{isTampered ? t('cardVerifyTampered') : t('cardVerifyValid')}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Last Scan:</span>
+                <span>{t('cardVerifyLastScan')}</span>
                 <span className="text-slate-300">{new Date(lastVerificationResult.timestamp).toLocaleTimeString()}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Anchor Match:</span>
-                <span>{isTampered ? 'Mismatch Found' : 'Verified Exact'}</span>
+                <span>{t('cardVerifyMatch')}</span>
+                <span>{isTampered ? t('cardVerifyMismatch') : t('cardVerifyExact')}</span>
               </div>
             </div>
           </CyberCard>
 
           {/* Card 4: Settings & Session Card */}
           <CyberCard
-            title="Settings & Session"
-            subtitle="Identity & Security Policy"
+            title={t('cardSettingsTitle')}
+            subtitle={t('cardSettingsSubtitle')}
             badge={user?.role}
             badgeVariant="cyan"
             icon={Settings}
             accentColor="cyan"
-            footerText="Manage Preferences & Session"
+            footerText={t('cardSettingsFooter')}
             onClick={() => navigate('/dashboard/settings')}
           >
             <p className="text-xs text-slate-400 mb-3">
-              Active security session metrics, GovNet IP binding, encryption key fingerprints, SOC dark-mode toggle, and role management.
+              {t('cardSettingsDesc')}
             </p>
             <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800/80 font-mono text-[11px] space-y-1">
               <div className="flex justify-between text-slate-400">
-                <span>Client IP:</span>
+                <span>{t('cardSettingsIP')}</span>
                 <span className="text-cyan-300 truncate max-w-[150px]">{user?.ip}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Session Token:</span>
+                <span>{t('cardSettingsToken')}</span>
                 <span className="text-slate-300">{user?.token}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Crypto Cipher:</span>
+                <span>{t('cardSettingsCipher')}</span>
                 <span className="text-slate-300">AES-256-GCM</span>
               </div>
             </div>
@@ -413,37 +415,37 @@ export default function DashboardHome() {
           {/* Card 5: Tamper Simulation Card (Admin Only) */}
           {isAdmin ? (
             <CyberCard
-              title="Tamper Simulation"
-              subtitle="Hackathon Adversary Testing"
-              badge="ADMIN EXCLUSIVE"
+              title={t('cardSimTitle')}
+              subtitle={t('cardSimSubtitle')}
+              badge={t('cardSimBadge')}
               badgeVariant="amber"
               icon={FlaskConical}
               accentColor="amber"
-              footerText="Launch Simulation Sandbox"
+              footerText={t('cardSimFooter')}
               onClick={() => navigate('/dashboard/simulations')}
             >
               <p className="text-xs text-slate-400 mb-3">
-                Simulate insider database attacks by modifying FIR defendants or land deeds. Test retroactive alert detection across the sentinel mesh.
+                {t('cardSimDesc')}
               </p>
               <div className="bg-amber-950/40 p-3 rounded-lg border border-amber-500/40 font-mono text-[11px] space-y-1 text-amber-300">
                 <div className="flex justify-between">
-                  <span>Adversary Lab:</span>
-                  <span className="font-bold">READY</span>
+                  <span>{t('cardSimLabState')}</span>
+                  <span className="font-bold">{t('cardSimReady')}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Attack Types:</span>
-                  <span className="text-slate-300">FIR Alteration, Deed Theft</span>
+                  <span>{t('cardSimTypes')}</span>
+                  <span className="text-slate-300">{t('cardSimTypesList')}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Current State:</span>
+                  <span>{t('cardSimState')}</span>
                   <span className={isTampered ? 'text-red-400 font-bold' : 'text-emerald-400'}>
-                    {isTampered ? 'Tampered Record Active' : 'Normal / Clean'}
+                    {isTampered ? t('cardSimTampered') : t('cardSimNormal')}
                   </span>
                 </div>
               </div>
             </CyberCard>
           ) : (
-            /* Restricted Tamper Simulation Card for Normal User */
+            /* Restricted Tamper Simulation Card for Citizen / Field User */
             <div className="p-6 rounded-xl bg-slate-900/40 border border-slate-800/60 opacity-80 relative flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-4">
@@ -453,10 +455,10 @@ export default function DashboardHome() {
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-slate-400">
-                        Tamper Simulation
+                        {t('cardSimRestrictedTitle')}
                       </h3>
                       <p className="text-xs font-mono text-slate-500">
-                        Level-5 Admin Clearance Required
+                        {t('cardSimBadge')}
                       </p>
                     </div>
                   </div>
@@ -465,13 +467,13 @@ export default function DashboardHome() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mb-4">
-                  Adversarial simulation controls and payload injection vectors are restricted to Level-5 Administrators. Role escalation from this interface is disabled by RBAC policy.
+                  {t('cardSimRestrictedDesc')}
                 </p>
               </div>
 
               <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-500 text-[11px] font-mono flex items-center space-x-2">
                 <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span>Auditor role restricted to verification and log inspection.</span>
+                <span>{t('cardSimRestrictedNote')}</span>
               </div>
             </div>
           )}
@@ -479,29 +481,29 @@ export default function DashboardHome() {
           {/* Card 6: Smart Contract Mesh (Admin Only) */}
           {isAdmin ? (
             <CyberCard
-              title="Smart Contract Mesh"
-              subtitle="Ethereum L2 Consensus"
-              badge="ADMIN EXCLUSIVE"
+              title={t('cardContractTitle')}
+              subtitle={t('cardContractSubtitle')}
+              badge={t('cardContractBadge')}
               badgeVariant="purple"
               icon={Cpu}
               accentColor="purple"
-              footerText="Manage Contract Anchors"
+              footerText={t('cardContractFooter')}
               onClick={() => navigate('/dashboard/smart-contract')}
             >
               <p className="text-xs text-slate-400 mb-3">
-                Decentralized Merkle root commitment registry, consensus quorum verification, and validator enclave key management.
+                {t('cardContractDesc')}
               </p>
               <div className="bg-purple-950/40 p-3 rounded-lg border border-purple-500/40 font-mono text-[11px] space-y-1 text-purple-300">
                 <div className="flex justify-between">
-                  <span>Network:</span>
+                  <span>{t('cardContractNetwork')}</span>
                   <span className="font-bold text-slate-200">Ethereum L2 Sepolia</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Validator Nodes:</span>
-                  <span className="text-emerald-400">12 / 12 Active Quorum</span>
+                  <span>{t('cardContractNodes')}</span>
+                  <span className="text-emerald-400">{t('cardContractNodesCount')}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Contract State:</span>
+                  <span>{t('cardContractState')}</span>
                   <span className="text-cyan-300 truncate max-w-[140px]">0x9e7a...491b8f</span>
                 </div>
               </div>
@@ -517,10 +519,10 @@ export default function DashboardHome() {
                     </div>
                     <div>
                       <h3 className="text-base font-bold text-slate-400">
-                        Smart Contract Controls
+                        {t('cardContractRestrictedTitle')}
                       </h3>
                       <p className="text-xs font-mono text-slate-500">
-                        Level-5 Admin Clearance Required
+                        {t('cardContractBadge')}
                       </p>
                     </div>
                   </div>
@@ -529,43 +531,43 @@ export default function DashboardHome() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mb-4">
-                  Smart contract anchor commitments, state broadcasts, and key rotations require Level-5 directive access. Auditing is accessible via the Verification Engine.
+                  {t('cardContractRestrictedDesc')}
                 </p>
               </div>
 
               <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 text-slate-500 text-[11px] font-mono flex items-center space-x-2">
                 <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span>Smart contract governance restricted to Administrators.</span>
+                <span>{t('cardContractRestrictedNote')}</span>
               </div>
             </div>
           )}
 
-          {/* Card 7: Sentinel AI Assistant */}
+          {/* Card 7: Sentinel Citizen AI Assistant */}
           <CyberCard
-            title="Sentinel AI Assistant"
-            subtitle="README.md Knowledge Engine"
-            badge="DOCS RAG"
+            title={t('cardAiTitle')}
+            subtitle={t('cardAiSubtitle')}
+            badge={t('cardAiBadge')}
             badgeVariant="cyan"
             icon={Bot}
             accentColor="cyan"
-            footerText="Launch Sentinel AI Assistant"
+            footerText={t('cardAiFooter')}
             onClick={() => window.dispatchEvent(new CustomEvent('open-sentinel-ai'))}
           >
             <p className="text-xs text-slate-400 mb-3">
-              Intelligent SOC assistant indexed against <code className="text-cyan-300">README.md</code>. Get immediate answers regarding hash-chains, Merkle roots, and auditor roles.
+              {t('cardAiDesc')}
             </p>
             <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-800/80 font-mono text-[11px] space-y-1">
               <div className="flex justify-between text-slate-400">
-                <span>Knowledge Base:</span>
+                <span>{t('cardAiBase')}</span>
                 <span className="text-cyan-300 font-bold">README.md (v2.4-SOC)</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>System Context:</span>
-                <span className="text-emerald-400">353 Lines • 13 Sections</span>
+                <span>{t('cardAiContext')}</span>
+                <span className="text-emerald-400">{t('cardAiContextCount')}</span>
               </div>
               <div className="flex justify-between text-slate-400">
-                <span>Inquiry Engine:</span>
-                <span className="text-cyan-400 hover:underline">Click to Consult Assistant &rarr;</span>
+                <span>{t('aiBannerBadge')}:</span>
+                <span className="text-cyan-400 hover:underline">{t('cardAiAction')}</span>
               </div>
             </div>
           </CyberCard>
