@@ -48,7 +48,7 @@ export function AuditProvider({ children }) {
   const performIntegrityAudit = useCallback(() => {
     const corruptedBlockIds = []
     const brokenChainIndices = []
-    
+
     for (let i = 0; i < logs.length; i++) {
       const block = logs[i]
       const rawPayload = JSON.stringify(block.payload)
